@@ -1,0 +1,86 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+      - "8080:8080"
+    environment:
+      AGENTREGISTRY_SERVER_GRPC_PORT: 9000
+      AGENTREGISTRY_SERVER_HTTP_PORT: 8080
+      AGENTREGISTRY_SERVER_ENV: dev
+      AGENTREGISTRY_SCYLLA_HOSTS: scylla:9042
+      AGENTREGISTRY_SCYLLA_KEYSPACE: agentregistry
+      AGENTREGISTRY_REDIS_ADDR: redis:6379
+      AGENTREGISTRY_POSTGRES_DSN: postgres://agentregistry:secret@postgres:5432/agentregistry?sslmode=disable
+      AGENTREGISTRY_AUTH_JWT_SECRET: dev-secret-change-in-prod
+      AGENTREGISTRY_EMBEDDER_URL: http://embedder:8000
+    depends_on:
+      scylla:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      embedder:
+        condition: service_healthy
+
+  embedder:
+    build:
+      context: ./embedder
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scylla:
+    image: scylladb/scylla:6.2
+    command: --smp 1 --memory 512M --developer-mode 1
+    ports:
+      - "9042:9042"
+    volumes:
+      - scylla_data:/var/lib/scylla
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: agentregistry
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: agentregistry
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentregistry"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  scylla_data:
+  redis_data:
+  postgres_data:

@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package agentregistry.v1;
+
+option go_package = "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1;registryv1";
+
+import "google/protobuf/timestamp.proto";
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum TransportType {
+  TRANSPORT_TYPE_UNSPECIFIED = 0;
+  TRANSPORT_TYPE_GRPC        = 1;
+  TRANSPORT_TYPE_HTTP        = 2;
+  TRANSPORT_TYPE_GRPC_WEB    = 3;
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_ACTIVE      = 1;
+  AGENT_STATUS_INACTIVE    = 2;
+  AGENT_STATUS_DEPRECATED  = 3;
+}
+
+enum InputOutputMode {
+  INPUT_OUTPUT_MODE_UNSPECIFIED = 0;
+  INPUT_OUTPUT_MODE_TEXT        = 1;
+  INPUT_OUTPUT_MODE_FILE        = 2;
+  INPUT_OUTPUT_MODE_IMAGE       = 3;
+  INPUT_OUTPUT_MODE_AUDIO       = 4;
+  INPUT_OUTPUT_MODE_STRUCTURED  = 5; // protobuf/json structured payloads
+}
+
+// ─── Core Models ─────────────────────────────────────────────────────────────
+
+message Skill {
+  string   id          = 1; // machine-readable unique id e.g. "fhir.lab.analyze"
+  string   name        = 2;
+  string   description = 3;
+  repeated string tags = 4;
+
+  // capability embedding hint — used by pgvector for semantic discovery
+  // populated by the server, not the publisher
+  repeated float embedding = 5 [packed = true];
+}
+
+message Capabilities {
+  bool push_notifications  = 1;
+  bool streaming           = 2; // supports server-streaming responses
+  bool multi_turn          = 3; // maintains conversation state
+  bool tool_use            = 4; // can invoke external tools/MCP
+}
+
+message Interface {
+  string        url       = 1;
+  TransportType transport = 2;
+  bool          primary   = 3;
+}
+
+message AgentCard {
+  string   id               = 1; // uuid, assigned by registry on first publish
+  string   name             = 2;
+  string   description      = 3;
+  string   version          = 4; // semver e.g. "1.2.0"
+  string   protocol_version = 5; // A2A protocol version e.g. "0.3.0"
+
+  repeated Interface        interfaces         = 6;
+  repeated Skill            skills             = 7;
+  Capabilities              capabilities       = 8;
+  repeated InputOutputMode  default_input_modes  = 9;
+  repeated InputOutputMode  default_output_modes = 10;
+
+  // identity
+  string publisher_id = 11; // links to PublisherAccount.id
+  string public_key   = 12; // Ed25519 public key (base64) used to verify updates
+
+  // lifecycle
+  AgentStatus                  status     = 13;
+  google.protobuf.Timestamp    created_at = 14;
+  google.protobuf.Timestamp    updated_at = 15;
+
+  // arbitrary binary metadata — for domain-specific extensions (e.g. SHARP context)
+  bytes metadata = 16;
+}
+
+// ─── Auth Models ─────────────────────────────────────────────────────────────
+
+message PublisherAccount {
+  string id         = 1; // uuid
+  string handle     = 2; // e.g. "utsav" — unique, human-chosen
+  string public_key = 3; // Ed25519 public key (base64)
+
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message SignedPayload {
+  bytes  payload   = 1; // serialized protobuf message
+  bytes  signature = 2; // Ed25519 signature of payload
+  string key_id    = 3; // which public key was used (publisher_id)
+}
