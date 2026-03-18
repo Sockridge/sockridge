@@ -10,12 +10,12 @@ import "google/protobuf/timestamp.proto";
 // ─── Registry Service ─────────────────────────────────────────────────────────
 
 service RegistryService {
-  rpc RegisterPublisher (RegisterPublisherRequest)       returns (RegisterPublisherResponse);
-  rpc AuthChallenge     (AuthChallengeRequest)           returns (AuthChallengeResponse);
-  rpc AuthVerify        (AuthVerifyRequest)              returns (AuthVerifyResponse);
-  rpc PublishAgent      (PublishAgentRequest)            returns (PublishAgentResponse);
-  rpc UpdateAgent       (UpdateAgentRequest)             returns (UpdateAgentResponse);
-  rpc DeprecateAgent    (DeprecateAgentRequest)          returns (DeprecateAgentResponse);
+  rpc RegisterPublisher (RegisterPublisherRequest) returns (RegisterPublisherResponse);
+  rpc AuthChallenge     (AuthChallengeRequest)     returns (AuthChallengeResponse);
+  rpc AuthVerify        (AuthVerifyRequest)        returns (AuthVerifyResponse);
+  rpc PublishAgent      (PublishAgentRequest)      returns (PublishAgentResponse);
+  rpc UpdateAgent       (UpdateAgentRequest)       returns (UpdateAgentResponse);
+  rpc DeprecateAgent    (DeprecateAgentRequest)    returns (DeprecateAgentResponse);
   rpc GetAgent          (RegistryServiceGetAgentRequest) returns (RegistryServiceGetAgentResponse);
 }
 
@@ -28,7 +28,20 @@ service DiscoveryService {
   rpc Watch          (WatchRequest)                    returns (stream WatchResponse);
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
+// ─── Access Agreement Service ─────────────────────────────────────────────────
+
+service AccessAgreementService {
+  rpc RequestAccess   (RequestAccessRequest)   returns (RequestAccessResponse);
+  rpc ListPending     (ListPendingRequest)      returns (stream ListPendingResponse);
+  rpc ApproveAccess   (ApproveAccessRequest)   returns (ApproveAccessResponse);
+  rpc DenyAccess      (DenyAccessRequest)      returns (DenyAccessResponse);
+  rpc RevokeAccess    (RevokeAccessRequest)    returns (RevokeAccessResponse);
+  rpc ListAgreements  (ListAgreementsRequest)  returns (stream ListAgreementsResponse);
+  rpc ResolveEndpoint (ResolveEndpointRequest) returns (ResolveEndpointResponse);
+  rpc GetAgreement    (GetAgreementRequest)    returns (GetAgreementResponse);
+}
+
+// ─── Auth Messages ────────────────────────────────────────────────────────────
 
 message RegisterPublisherRequest {
   string handle     = 1;
@@ -147,4 +160,84 @@ message WatchResponse {
   EventType                 event_type  = 1;
   AgentCard                 agent       = 2;
   google.protobuf.Timestamp occurred_at = 3;
+}
+
+// ─── Access Agreement RPCs ────────────────────────────────────────────────────
+
+message RequestAccessRequest {
+  string requester_id = 1;
+  string receiver_id  = 2;
+  string message      = 3;
+}
+
+message RequestAccessResponse {
+  AccessAgreement agreement = 1;
+}
+
+message ListPendingRequest {
+  string publisher_id = 1;
+}
+
+message ListPendingResponse {
+  AccessAgreement agreement        = 1;
+  string          requester_handle = 2;
+}
+
+message ApproveAccessRequest {
+  string publisher_id = 1;
+  string agreement_id = 2;
+}
+
+message ApproveAccessResponse {
+  AccessAgreement agreement  = 1;
+  string          shared_key = 2;
+}
+
+message DenyAccessRequest {
+  string publisher_id = 1;
+  string agreement_id = 2;
+}
+
+message DenyAccessResponse {
+  AccessAgreement agreement = 1;
+}
+
+message RevokeAccessRequest {
+  string publisher_id = 1;
+  string agreement_id = 2;
+}
+
+message RevokeAccessResponse {
+  bool revoked = 1;
+}
+
+message ListAgreementsRequest {
+  string publisher_id = 1;
+}
+
+message ListAgreementsResponse {
+  AccessAgreement agreement    = 1;
+  string          other_handle = 2;
+}
+
+message ResolveEndpointRequest {
+  string agent_id   = 1;
+  string shared_key = 2;
+}
+
+message ResolveEndpointResponse {
+  string    agent_id   = 1;
+  string    url        = 2;
+  string    transport  = 3;
+  string    agent_name = 4;
+  AgentCard agent      = 5; // full card — skills, capabilities, version
+}
+
+message GetAgreementRequest {
+  string publisher_id = 1;
+  string agreement_id = 2;
+}
+
+message GetAgreementResponse {
+  AccessAgreement agreement = 1;
 }

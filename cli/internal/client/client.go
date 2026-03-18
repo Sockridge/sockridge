@@ -17,6 +17,7 @@ const DefaultServerURL = "http://localhost:9000"
 type Client struct {
 	Registry  registryv1connect.RegistryServiceClient
 	Discovery registryv1connect.DiscoveryServiceClient
+	Access    registryv1connect.AccessAgreementServiceClient
 }
 
 func New(serverURL string, token string) *Client {
@@ -37,6 +38,7 @@ func New(serverURL string, token string) *Client {
 	return &Client{
 		Registry:  registryv1connect.NewRegistryServiceClient(httpClient, serverURL, opts...),
 		Discovery: registryv1connect.NewDiscoveryServiceClient(httpClient, serverURL),
+		Access:    registryv1connect.NewAccessAgreementServiceClient(httpClient, serverURL, opts...),
 	}
 }
 

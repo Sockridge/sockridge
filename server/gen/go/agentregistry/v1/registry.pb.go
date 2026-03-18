@@ -1210,6 +1210,822 @@ func (x *WatchResponse) GetOccurredAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type RequestAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequesterId   string                 `protobuf:"bytes,1,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"`
+	ReceiverId    string                 `protobuf:"bytes,2,opt,name=receiver_id,json=receiverId,proto3" json:"receiver_id,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestAccessRequest) Reset() {
+	*x = RequestAccessRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAccessRequest) ProtoMessage() {}
+
+func (x *RequestAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestAccessRequest.ProtoReflect.Descriptor instead.
+func (*RequestAccessRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *RequestAccessRequest) GetRequesterId() string {
+	if x != nil {
+		return x.RequesterId
+	}
+	return ""
+}
+
+func (x *RequestAccessRequest) GetReceiverId() string {
+	if x != nil {
+		return x.ReceiverId
+	}
+	return ""
+}
+
+func (x *RequestAccessRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type RequestAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agreement     *AccessAgreement       `protobuf:"bytes,1,opt,name=agreement,proto3" json:"agreement,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestAccessResponse) Reset() {
+	*x = RequestAccessResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAccessResponse) ProtoMessage() {}
+
+func (x *RequestAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestAccessResponse.ProtoReflect.Descriptor instead.
+func (*RequestAccessResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *RequestAccessResponse) GetAgreement() *AccessAgreement {
+	if x != nil {
+		return x.Agreement
+	}
+	return nil
+}
+
+type ListPendingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublisherId   string                 `protobuf:"bytes,1,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPendingRequest) Reset() {
+	*x = ListPendingRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPendingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPendingRequest) ProtoMessage() {}
+
+func (x *ListPendingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPendingRequest.ProtoReflect.Descriptor instead.
+func (*ListPendingRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListPendingRequest) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+type ListPendingResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Agreement       *AccessAgreement       `protobuf:"bytes,1,opt,name=agreement,proto3" json:"agreement,omitempty"`
+	RequesterHandle string                 `protobuf:"bytes,2,opt,name=requester_handle,json=requesterHandle,proto3" json:"requester_handle,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ListPendingResponse) Reset() {
+	*x = ListPendingResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPendingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPendingResponse) ProtoMessage() {}
+
+func (x *ListPendingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPendingResponse.ProtoReflect.Descriptor instead.
+func (*ListPendingResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListPendingResponse) GetAgreement() *AccessAgreement {
+	if x != nil {
+		return x.Agreement
+	}
+	return nil
+}
+
+func (x *ListPendingResponse) GetRequesterHandle() string {
+	if x != nil {
+		return x.RequesterHandle
+	}
+	return ""
+}
+
+type ApproveAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublisherId   string                 `protobuf:"bytes,1,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	AgreementId   string                 `protobuf:"bytes,2,opt,name=agreement_id,json=agreementId,proto3" json:"agreement_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveAccessRequest) Reset() {
+	*x = ApproveAccessRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveAccessRequest) ProtoMessage() {}
+
+func (x *ApproveAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveAccessRequest.ProtoReflect.Descriptor instead.
+func (*ApproveAccessRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ApproveAccessRequest) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+func (x *ApproveAccessRequest) GetAgreementId() string {
+	if x != nil {
+		return x.AgreementId
+	}
+	return ""
+}
+
+type ApproveAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agreement     *AccessAgreement       `protobuf:"bytes,1,opt,name=agreement,proto3" json:"agreement,omitempty"`
+	SharedKey     string                 `protobuf:"bytes,2,opt,name=shared_key,json=sharedKey,proto3" json:"shared_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveAccessResponse) Reset() {
+	*x = ApproveAccessResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveAccessResponse) ProtoMessage() {}
+
+func (x *ApproveAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveAccessResponse.ProtoReflect.Descriptor instead.
+func (*ApproveAccessResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ApproveAccessResponse) GetAgreement() *AccessAgreement {
+	if x != nil {
+		return x.Agreement
+	}
+	return nil
+}
+
+func (x *ApproveAccessResponse) GetSharedKey() string {
+	if x != nil {
+		return x.SharedKey
+	}
+	return ""
+}
+
+type DenyAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublisherId   string                 `protobuf:"bytes,1,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	AgreementId   string                 `protobuf:"bytes,2,opt,name=agreement_id,json=agreementId,proto3" json:"agreement_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DenyAccessRequest) Reset() {
+	*x = DenyAccessRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DenyAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DenyAccessRequest) ProtoMessage() {}
+
+func (x *DenyAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DenyAccessRequest.ProtoReflect.Descriptor instead.
+func (*DenyAccessRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *DenyAccessRequest) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+func (x *DenyAccessRequest) GetAgreementId() string {
+	if x != nil {
+		return x.AgreementId
+	}
+	return ""
+}
+
+type DenyAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agreement     *AccessAgreement       `protobuf:"bytes,1,opt,name=agreement,proto3" json:"agreement,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DenyAccessResponse) Reset() {
+	*x = DenyAccessResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DenyAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DenyAccessResponse) ProtoMessage() {}
+
+func (x *DenyAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DenyAccessResponse.ProtoReflect.Descriptor instead.
+func (*DenyAccessResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *DenyAccessResponse) GetAgreement() *AccessAgreement {
+	if x != nil {
+		return x.Agreement
+	}
+	return nil
+}
+
+type RevokeAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublisherId   string                 `protobuf:"bytes,1,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	AgreementId   string                 `protobuf:"bytes,2,opt,name=agreement_id,json=agreementId,proto3" json:"agreement_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeAccessRequest) Reset() {
+	*x = RevokeAccessRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeAccessRequest) ProtoMessage() {}
+
+func (x *RevokeAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeAccessRequest.ProtoReflect.Descriptor instead.
+func (*RevokeAccessRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *RevokeAccessRequest) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+func (x *RevokeAccessRequest) GetAgreementId() string {
+	if x != nil {
+		return x.AgreementId
+	}
+	return ""
+}
+
+type RevokeAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Revoked       bool                   `protobuf:"varint,1,opt,name=revoked,proto3" json:"revoked,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeAccessResponse) Reset() {
+	*x = RevokeAccessResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeAccessResponse) ProtoMessage() {}
+
+func (x *RevokeAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeAccessResponse.ProtoReflect.Descriptor instead.
+func (*RevokeAccessResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *RevokeAccessResponse) GetRevoked() bool {
+	if x != nil {
+		return x.Revoked
+	}
+	return false
+}
+
+type ListAgreementsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublisherId   string                 `protobuf:"bytes,1,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgreementsRequest) Reset() {
+	*x = ListAgreementsRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgreementsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgreementsRequest) ProtoMessage() {}
+
+func (x *ListAgreementsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgreementsRequest.ProtoReflect.Descriptor instead.
+func (*ListAgreementsRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *ListAgreementsRequest) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+type ListAgreementsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agreement     *AccessAgreement       `protobuf:"bytes,1,opt,name=agreement,proto3" json:"agreement,omitempty"`
+	OtherHandle   string                 `protobuf:"bytes,2,opt,name=other_handle,json=otherHandle,proto3" json:"other_handle,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAgreementsResponse) Reset() {
+	*x = ListAgreementsResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAgreementsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAgreementsResponse) ProtoMessage() {}
+
+func (x *ListAgreementsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAgreementsResponse.ProtoReflect.Descriptor instead.
+func (*ListAgreementsResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ListAgreementsResponse) GetAgreement() *AccessAgreement {
+	if x != nil {
+		return x.Agreement
+	}
+	return nil
+}
+
+func (x *ListAgreementsResponse) GetOtherHandle() string {
+	if x != nil {
+		return x.OtherHandle
+	}
+	return ""
+}
+
+type ResolveEndpointRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SharedKey     string                 `protobuf:"bytes,2,opt,name=shared_key,json=sharedKey,proto3" json:"shared_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveEndpointRequest) Reset() {
+	*x = ResolveEndpointRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveEndpointRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveEndpointRequest) ProtoMessage() {}
+
+func (x *ResolveEndpointRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveEndpointRequest.ProtoReflect.Descriptor instead.
+func (*ResolveEndpointRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *ResolveEndpointRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *ResolveEndpointRequest) GetSharedKey() string {
+	if x != nil {
+		return x.SharedKey
+	}
+	return ""
+}
+
+type ResolveEndpointResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	Transport     string                 `protobuf:"bytes,3,opt,name=transport,proto3" json:"transport,omitempty"`
+	AgentName     string                 `protobuf:"bytes,4,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
+	Agent         *AgentCard             `protobuf:"bytes,5,opt,name=agent,proto3" json:"agent,omitempty"` // full card — skills, capabilities, version
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveEndpointResponse) Reset() {
+	*x = ResolveEndpointResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveEndpointResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveEndpointResponse) ProtoMessage() {}
+
+func (x *ResolveEndpointResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveEndpointResponse.ProtoReflect.Descriptor instead.
+func (*ResolveEndpointResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *ResolveEndpointResponse) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *ResolveEndpointResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *ResolveEndpointResponse) GetTransport() string {
+	if x != nil {
+		return x.Transport
+	}
+	return ""
+}
+
+func (x *ResolveEndpointResponse) GetAgentName() string {
+	if x != nil {
+		return x.AgentName
+	}
+	return ""
+}
+
+func (x *ResolveEndpointResponse) GetAgent() *AgentCard {
+	if x != nil {
+		return x.Agent
+	}
+	return nil
+}
+
+type GetAgreementRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublisherId   string                 `protobuf:"bytes,1,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	AgreementId   string                 `protobuf:"bytes,2,opt,name=agreement_id,json=agreementId,proto3" json:"agreement_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAgreementRequest) Reset() {
+	*x = GetAgreementRequest{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAgreementRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAgreementRequest) ProtoMessage() {}
+
+func (x *GetAgreementRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAgreementRequest.ProtoReflect.Descriptor instead.
+func (*GetAgreementRequest) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *GetAgreementRequest) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+func (x *GetAgreementRequest) GetAgreementId() string {
+	if x != nil {
+		return x.AgreementId
+	}
+	return ""
+}
+
+type GetAgreementResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Agreement     *AccessAgreement       `protobuf:"bytes,1,opt,name=agreement,proto3" json:"agreement,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAgreementResponse) Reset() {
+	*x = GetAgreementResponse{}
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAgreementResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAgreementResponse) ProtoMessage() {}
+
+func (x *GetAgreementResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_registry_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAgreementResponse.ProtoReflect.Descriptor instead.
+func (*GetAgreementResponse) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_registry_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *GetAgreementResponse) GetAgreement() *AccessAgreement {
+	if x != nil {
+		return x.Agreement
+	}
+	return nil
+}
+
 var File_agentregistry_v1_registry_proto protoreflect.FileDescriptor
 
 const file_agentregistry_v1_registry_proto_rawDesc = "" +
@@ -1290,7 +2106,57 @@ const file_agentregistry_v1_registry_proto_rawDesc = "" +
 	"\x16EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14EVENT_TYPE_PUBLISHED\x10\x01\x12\x16\n" +
 	"\x12EVENT_TYPE_UPDATED\x10\x02\x12\x19\n" +
-	"\x15EVENT_TYPE_DEPRECATED\x10\x032\xcb\x05\n" +
+	"\x15EVENT_TYPE_DEPRECATED\x10\x03\"t\n" +
+	"\x14RequestAccessRequest\x12!\n" +
+	"\frequester_id\x18\x01 \x01(\tR\vrequesterId\x12\x1f\n" +
+	"\vreceiver_id\x18\x02 \x01(\tR\n" +
+	"receiverId\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"X\n" +
+	"\x15RequestAccessResponse\x12?\n" +
+	"\tagreement\x18\x01 \x01(\v2!.agentregistry.v1.AccessAgreementR\tagreement\"7\n" +
+	"\x12ListPendingRequest\x12!\n" +
+	"\fpublisher_id\x18\x01 \x01(\tR\vpublisherId\"\x81\x01\n" +
+	"\x13ListPendingResponse\x12?\n" +
+	"\tagreement\x18\x01 \x01(\v2!.agentregistry.v1.AccessAgreementR\tagreement\x12)\n" +
+	"\x10requester_handle\x18\x02 \x01(\tR\x0frequesterHandle\"\\\n" +
+	"\x14ApproveAccessRequest\x12!\n" +
+	"\fpublisher_id\x18\x01 \x01(\tR\vpublisherId\x12!\n" +
+	"\fagreement_id\x18\x02 \x01(\tR\vagreementId\"w\n" +
+	"\x15ApproveAccessResponse\x12?\n" +
+	"\tagreement\x18\x01 \x01(\v2!.agentregistry.v1.AccessAgreementR\tagreement\x12\x1d\n" +
+	"\n" +
+	"shared_key\x18\x02 \x01(\tR\tsharedKey\"Y\n" +
+	"\x11DenyAccessRequest\x12!\n" +
+	"\fpublisher_id\x18\x01 \x01(\tR\vpublisherId\x12!\n" +
+	"\fagreement_id\x18\x02 \x01(\tR\vagreementId\"U\n" +
+	"\x12DenyAccessResponse\x12?\n" +
+	"\tagreement\x18\x01 \x01(\v2!.agentregistry.v1.AccessAgreementR\tagreement\"[\n" +
+	"\x13RevokeAccessRequest\x12!\n" +
+	"\fpublisher_id\x18\x01 \x01(\tR\vpublisherId\x12!\n" +
+	"\fagreement_id\x18\x02 \x01(\tR\vagreementId\"0\n" +
+	"\x14RevokeAccessResponse\x12\x18\n" +
+	"\arevoked\x18\x01 \x01(\bR\arevoked\":\n" +
+	"\x15ListAgreementsRequest\x12!\n" +
+	"\fpublisher_id\x18\x01 \x01(\tR\vpublisherId\"|\n" +
+	"\x16ListAgreementsResponse\x12?\n" +
+	"\tagreement\x18\x01 \x01(\v2!.agentregistry.v1.AccessAgreementR\tagreement\x12!\n" +
+	"\fother_handle\x18\x02 \x01(\tR\votherHandle\"R\n" +
+	"\x16ResolveEndpointRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
+	"\n" +
+	"shared_key\x18\x02 \x01(\tR\tsharedKey\"\xb6\x01\n" +
+	"\x17ResolveEndpointResponse\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1c\n" +
+	"\ttransport\x18\x03 \x01(\tR\ttransport\x12\x1d\n" +
+	"\n" +
+	"agent_name\x18\x04 \x01(\tR\tagentName\x121\n" +
+	"\x05agent\x18\x05 \x01(\v2\x1b.agentregistry.v1.AgentCardR\x05agent\"[\n" +
+	"\x13GetAgreementRequest\x12!\n" +
+	"\fpublisher_id\x18\x01 \x01(\tR\vpublisherId\x12!\n" +
+	"\fagreement_id\x18\x02 \x01(\tR\vagreementId\"W\n" +
+	"\x14GetAgreementResponse\x12?\n" +
+	"\tagreement\x18\x01 \x01(\v2!.agentregistry.v1.AccessAgreementR\tagreement2\xcb\x05\n" +
 	"\x0fRegistryService\x12l\n" +
 	"\x11RegisterPublisher\x12*.agentregistry.v1.RegisterPublisherRequest\x1a+.agentregistry.v1.RegisterPublisherResponse\x12`\n" +
 	"\rAuthChallenge\x12&.agentregistry.v1.AuthChallengeRequest\x1a'.agentregistry.v1.AuthChallengeResponse\x12W\n" +
@@ -1305,7 +2171,17 @@ const file_agentregistry_v1_registry_proto_rawDesc = "" +
 	"\n" +
 	"ListAgents\x12#.agentregistry.v1.ListAgentsRequest\x1a$.agentregistry.v1.ListAgentsResponse0\x01\x12e\n" +
 	"\x0eSemanticSearch\x12'.agentregistry.v1.SemanticSearchRequest\x1a(.agentregistry.v1.SemanticSearchResponse0\x01\x12J\n" +
-	"\x05Watch\x12\x1e.agentregistry.v1.WatchRequest\x1a\x1f.agentregistry.v1.WatchResponse0\x01BRZPgithub.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1;registryv1b\x06proto3"
+	"\x05Watch\x12\x1e.agentregistry.v1.WatchRequest\x1a\x1f.agentregistry.v1.WatchResponse0\x012\xa0\x06\n" +
+	"\x16AccessAgreementService\x12`\n" +
+	"\rRequestAccess\x12&.agentregistry.v1.RequestAccessRequest\x1a'.agentregistry.v1.RequestAccessResponse\x12\\\n" +
+	"\vListPending\x12$.agentregistry.v1.ListPendingRequest\x1a%.agentregistry.v1.ListPendingResponse0\x01\x12`\n" +
+	"\rApproveAccess\x12&.agentregistry.v1.ApproveAccessRequest\x1a'.agentregistry.v1.ApproveAccessResponse\x12W\n" +
+	"\n" +
+	"DenyAccess\x12#.agentregistry.v1.DenyAccessRequest\x1a$.agentregistry.v1.DenyAccessResponse\x12]\n" +
+	"\fRevokeAccess\x12%.agentregistry.v1.RevokeAccessRequest\x1a&.agentregistry.v1.RevokeAccessResponse\x12e\n" +
+	"\x0eListAgreements\x12'.agentregistry.v1.ListAgreementsRequest\x1a(.agentregistry.v1.ListAgreementsResponse0\x01\x12f\n" +
+	"\x0fResolveEndpoint\x12(.agentregistry.v1.ResolveEndpointRequest\x1a).agentregistry.v1.ResolveEndpointResponse\x12]\n" +
+	"\fGetAgreement\x12%.agentregistry.v1.GetAgreementRequest\x1a&.agentregistry.v1.GetAgreementResponseBRZPgithub.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1;registryv1b\x06proto3"
 
 var (
 	file_agentregistry_v1_registry_proto_rawDescOnce sync.Once
@@ -1320,7 +2196,7 @@ func file_agentregistry_v1_registry_proto_rawDescGZIP() []byte {
 }
 
 var file_agentregistry_v1_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_agentregistry_v1_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_agentregistry_v1_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_agentregistry_v1_registry_proto_goTypes = []any{
 	(WatchResponse_EventType)(0),             // 0: agentregistry.v1.WatchResponse.EventType
 	(*RegisterPublisherRequest)(nil),         // 1: agentregistry.v1.RegisterPublisherRequest
@@ -1345,57 +2221,97 @@ var file_agentregistry_v1_registry_proto_goTypes = []any{
 	(*SemanticSearchResponse)(nil),           // 20: agentregistry.v1.SemanticSearchResponse
 	(*WatchRequest)(nil),                     // 21: agentregistry.v1.WatchRequest
 	(*WatchResponse)(nil),                    // 22: agentregistry.v1.WatchResponse
-	(*PublisherAccount)(nil),                 // 23: agentregistry.v1.PublisherAccount
-	(*timestamppb.Timestamp)(nil),            // 24: google.protobuf.Timestamp
-	(*SignedPayload)(nil),                    // 25: agentregistry.v1.SignedPayload
-	(*AgentCard)(nil),                        // 26: agentregistry.v1.AgentCard
-	(AgentStatus)(0),                         // 27: agentregistry.v1.AgentStatus
+	(*RequestAccessRequest)(nil),             // 23: agentregistry.v1.RequestAccessRequest
+	(*RequestAccessResponse)(nil),            // 24: agentregistry.v1.RequestAccessResponse
+	(*ListPendingRequest)(nil),               // 25: agentregistry.v1.ListPendingRequest
+	(*ListPendingResponse)(nil),              // 26: agentregistry.v1.ListPendingResponse
+	(*ApproveAccessRequest)(nil),             // 27: agentregistry.v1.ApproveAccessRequest
+	(*ApproveAccessResponse)(nil),            // 28: agentregistry.v1.ApproveAccessResponse
+	(*DenyAccessRequest)(nil),                // 29: agentregistry.v1.DenyAccessRequest
+	(*DenyAccessResponse)(nil),               // 30: agentregistry.v1.DenyAccessResponse
+	(*RevokeAccessRequest)(nil),              // 31: agentregistry.v1.RevokeAccessRequest
+	(*RevokeAccessResponse)(nil),             // 32: agentregistry.v1.RevokeAccessResponse
+	(*ListAgreementsRequest)(nil),            // 33: agentregistry.v1.ListAgreementsRequest
+	(*ListAgreementsResponse)(nil),           // 34: agentregistry.v1.ListAgreementsResponse
+	(*ResolveEndpointRequest)(nil),           // 35: agentregistry.v1.ResolveEndpointRequest
+	(*ResolveEndpointResponse)(nil),          // 36: agentregistry.v1.ResolveEndpointResponse
+	(*GetAgreementRequest)(nil),              // 37: agentregistry.v1.GetAgreementRequest
+	(*GetAgreementResponse)(nil),             // 38: agentregistry.v1.GetAgreementResponse
+	(*PublisherAccount)(nil),                 // 39: agentregistry.v1.PublisherAccount
+	(*timestamppb.Timestamp)(nil),            // 40: google.protobuf.Timestamp
+	(*SignedPayload)(nil),                    // 41: agentregistry.v1.SignedPayload
+	(*AgentCard)(nil),                        // 42: agentregistry.v1.AgentCard
+	(AgentStatus)(0),                         // 43: agentregistry.v1.AgentStatus
+	(*AccessAgreement)(nil),                  // 44: agentregistry.v1.AccessAgreement
 }
 var file_agentregistry_v1_registry_proto_depIdxs = []int32{
-	23, // 0: agentregistry.v1.RegisterPublisherResponse.account:type_name -> agentregistry.v1.PublisherAccount
-	24, // 1: agentregistry.v1.AuthChallengeResponse.expires_at:type_name -> google.protobuf.Timestamp
-	24, // 2: agentregistry.v1.AuthVerifyResponse.expires_at:type_name -> google.protobuf.Timestamp
-	25, // 3: agentregistry.v1.PublishAgentRequest.payload:type_name -> agentregistry.v1.SignedPayload
-	26, // 4: agentregistry.v1.PublishAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
-	25, // 5: agentregistry.v1.UpdateAgentRequest.payload:type_name -> agentregistry.v1.SignedPayload
-	26, // 6: agentregistry.v1.UpdateAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
-	26, // 7: agentregistry.v1.DeprecateAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
-	26, // 8: agentregistry.v1.RegistryServiceGetAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
-	26, // 9: agentregistry.v1.DiscoveryServiceGetAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
-	27, // 10: agentregistry.v1.ListAgentsRequest.status:type_name -> agentregistry.v1.AgentStatus
-	26, // 11: agentregistry.v1.ListAgentsResponse.agent:type_name -> agentregistry.v1.AgentCard
-	27, // 12: agentregistry.v1.SemanticSearchRequest.status:type_name -> agentregistry.v1.AgentStatus
-	26, // 13: agentregistry.v1.SemanticSearchResponse.agent:type_name -> agentregistry.v1.AgentCard
+	39, // 0: agentregistry.v1.RegisterPublisherResponse.account:type_name -> agentregistry.v1.PublisherAccount
+	40, // 1: agentregistry.v1.AuthChallengeResponse.expires_at:type_name -> google.protobuf.Timestamp
+	40, // 2: agentregistry.v1.AuthVerifyResponse.expires_at:type_name -> google.protobuf.Timestamp
+	41, // 3: agentregistry.v1.PublishAgentRequest.payload:type_name -> agentregistry.v1.SignedPayload
+	42, // 4: agentregistry.v1.PublishAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
+	41, // 5: agentregistry.v1.UpdateAgentRequest.payload:type_name -> agentregistry.v1.SignedPayload
+	42, // 6: agentregistry.v1.UpdateAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
+	42, // 7: agentregistry.v1.DeprecateAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
+	42, // 8: agentregistry.v1.RegistryServiceGetAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
+	42, // 9: agentregistry.v1.DiscoveryServiceGetAgentResponse.agent:type_name -> agentregistry.v1.AgentCard
+	43, // 10: agentregistry.v1.ListAgentsRequest.status:type_name -> agentregistry.v1.AgentStatus
+	42, // 11: agentregistry.v1.ListAgentsResponse.agent:type_name -> agentregistry.v1.AgentCard
+	43, // 12: agentregistry.v1.SemanticSearchRequest.status:type_name -> agentregistry.v1.AgentStatus
+	42, // 13: agentregistry.v1.SemanticSearchResponse.agent:type_name -> agentregistry.v1.AgentCard
 	0,  // 14: agentregistry.v1.WatchResponse.event_type:type_name -> agentregistry.v1.WatchResponse.EventType
-	26, // 15: agentregistry.v1.WatchResponse.agent:type_name -> agentregistry.v1.AgentCard
-	24, // 16: agentregistry.v1.WatchResponse.occurred_at:type_name -> google.protobuf.Timestamp
-	1,  // 17: agentregistry.v1.RegistryService.RegisterPublisher:input_type -> agentregistry.v1.RegisterPublisherRequest
-	3,  // 18: agentregistry.v1.RegistryService.AuthChallenge:input_type -> agentregistry.v1.AuthChallengeRequest
-	5,  // 19: agentregistry.v1.RegistryService.AuthVerify:input_type -> agentregistry.v1.AuthVerifyRequest
-	7,  // 20: agentregistry.v1.RegistryService.PublishAgent:input_type -> agentregistry.v1.PublishAgentRequest
-	9,  // 21: agentregistry.v1.RegistryService.UpdateAgent:input_type -> agentregistry.v1.UpdateAgentRequest
-	11, // 22: agentregistry.v1.RegistryService.DeprecateAgent:input_type -> agentregistry.v1.DeprecateAgentRequest
-	13, // 23: agentregistry.v1.RegistryService.GetAgent:input_type -> agentregistry.v1.RegistryServiceGetAgentRequest
-	15, // 24: agentregistry.v1.DiscoveryService.GetAgent:input_type -> agentregistry.v1.DiscoveryServiceGetAgentRequest
-	17, // 25: agentregistry.v1.DiscoveryService.ListAgents:input_type -> agentregistry.v1.ListAgentsRequest
-	19, // 26: agentregistry.v1.DiscoveryService.SemanticSearch:input_type -> agentregistry.v1.SemanticSearchRequest
-	21, // 27: agentregistry.v1.DiscoveryService.Watch:input_type -> agentregistry.v1.WatchRequest
-	2,  // 28: agentregistry.v1.RegistryService.RegisterPublisher:output_type -> agentregistry.v1.RegisterPublisherResponse
-	4,  // 29: agentregistry.v1.RegistryService.AuthChallenge:output_type -> agentregistry.v1.AuthChallengeResponse
-	6,  // 30: agentregistry.v1.RegistryService.AuthVerify:output_type -> agentregistry.v1.AuthVerifyResponse
-	8,  // 31: agentregistry.v1.RegistryService.PublishAgent:output_type -> agentregistry.v1.PublishAgentResponse
-	10, // 32: agentregistry.v1.RegistryService.UpdateAgent:output_type -> agentregistry.v1.UpdateAgentResponse
-	12, // 33: agentregistry.v1.RegistryService.DeprecateAgent:output_type -> agentregistry.v1.DeprecateAgentResponse
-	14, // 34: agentregistry.v1.RegistryService.GetAgent:output_type -> agentregistry.v1.RegistryServiceGetAgentResponse
-	16, // 35: agentregistry.v1.DiscoveryService.GetAgent:output_type -> agentregistry.v1.DiscoveryServiceGetAgentResponse
-	18, // 36: agentregistry.v1.DiscoveryService.ListAgents:output_type -> agentregistry.v1.ListAgentsResponse
-	20, // 37: agentregistry.v1.DiscoveryService.SemanticSearch:output_type -> agentregistry.v1.SemanticSearchResponse
-	22, // 38: agentregistry.v1.DiscoveryService.Watch:output_type -> agentregistry.v1.WatchResponse
-	28, // [28:39] is the sub-list for method output_type
-	17, // [17:28] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	42, // 15: agentregistry.v1.WatchResponse.agent:type_name -> agentregistry.v1.AgentCard
+	40, // 16: agentregistry.v1.WatchResponse.occurred_at:type_name -> google.protobuf.Timestamp
+	44, // 17: agentregistry.v1.RequestAccessResponse.agreement:type_name -> agentregistry.v1.AccessAgreement
+	44, // 18: agentregistry.v1.ListPendingResponse.agreement:type_name -> agentregistry.v1.AccessAgreement
+	44, // 19: agentregistry.v1.ApproveAccessResponse.agreement:type_name -> agentregistry.v1.AccessAgreement
+	44, // 20: agentregistry.v1.DenyAccessResponse.agreement:type_name -> agentregistry.v1.AccessAgreement
+	44, // 21: agentregistry.v1.ListAgreementsResponse.agreement:type_name -> agentregistry.v1.AccessAgreement
+	42, // 22: agentregistry.v1.ResolveEndpointResponse.agent:type_name -> agentregistry.v1.AgentCard
+	44, // 23: agentregistry.v1.GetAgreementResponse.agreement:type_name -> agentregistry.v1.AccessAgreement
+	1,  // 24: agentregistry.v1.RegistryService.RegisterPublisher:input_type -> agentregistry.v1.RegisterPublisherRequest
+	3,  // 25: agentregistry.v1.RegistryService.AuthChallenge:input_type -> agentregistry.v1.AuthChallengeRequest
+	5,  // 26: agentregistry.v1.RegistryService.AuthVerify:input_type -> agentregistry.v1.AuthVerifyRequest
+	7,  // 27: agentregistry.v1.RegistryService.PublishAgent:input_type -> agentregistry.v1.PublishAgentRequest
+	9,  // 28: agentregistry.v1.RegistryService.UpdateAgent:input_type -> agentregistry.v1.UpdateAgentRequest
+	11, // 29: agentregistry.v1.RegistryService.DeprecateAgent:input_type -> agentregistry.v1.DeprecateAgentRequest
+	13, // 30: agentregistry.v1.RegistryService.GetAgent:input_type -> agentregistry.v1.RegistryServiceGetAgentRequest
+	15, // 31: agentregistry.v1.DiscoveryService.GetAgent:input_type -> agentregistry.v1.DiscoveryServiceGetAgentRequest
+	17, // 32: agentregistry.v1.DiscoveryService.ListAgents:input_type -> agentregistry.v1.ListAgentsRequest
+	19, // 33: agentregistry.v1.DiscoveryService.SemanticSearch:input_type -> agentregistry.v1.SemanticSearchRequest
+	21, // 34: agentregistry.v1.DiscoveryService.Watch:input_type -> agentregistry.v1.WatchRequest
+	23, // 35: agentregistry.v1.AccessAgreementService.RequestAccess:input_type -> agentregistry.v1.RequestAccessRequest
+	25, // 36: agentregistry.v1.AccessAgreementService.ListPending:input_type -> agentregistry.v1.ListPendingRequest
+	27, // 37: agentregistry.v1.AccessAgreementService.ApproveAccess:input_type -> agentregistry.v1.ApproveAccessRequest
+	29, // 38: agentregistry.v1.AccessAgreementService.DenyAccess:input_type -> agentregistry.v1.DenyAccessRequest
+	31, // 39: agentregistry.v1.AccessAgreementService.RevokeAccess:input_type -> agentregistry.v1.RevokeAccessRequest
+	33, // 40: agentregistry.v1.AccessAgreementService.ListAgreements:input_type -> agentregistry.v1.ListAgreementsRequest
+	35, // 41: agentregistry.v1.AccessAgreementService.ResolveEndpoint:input_type -> agentregistry.v1.ResolveEndpointRequest
+	37, // 42: agentregistry.v1.AccessAgreementService.GetAgreement:input_type -> agentregistry.v1.GetAgreementRequest
+	2,  // 43: agentregistry.v1.RegistryService.RegisterPublisher:output_type -> agentregistry.v1.RegisterPublisherResponse
+	4,  // 44: agentregistry.v1.RegistryService.AuthChallenge:output_type -> agentregistry.v1.AuthChallengeResponse
+	6,  // 45: agentregistry.v1.RegistryService.AuthVerify:output_type -> agentregistry.v1.AuthVerifyResponse
+	8,  // 46: agentregistry.v1.RegistryService.PublishAgent:output_type -> agentregistry.v1.PublishAgentResponse
+	10, // 47: agentregistry.v1.RegistryService.UpdateAgent:output_type -> agentregistry.v1.UpdateAgentResponse
+	12, // 48: agentregistry.v1.RegistryService.DeprecateAgent:output_type -> agentregistry.v1.DeprecateAgentResponse
+	14, // 49: agentregistry.v1.RegistryService.GetAgent:output_type -> agentregistry.v1.RegistryServiceGetAgentResponse
+	16, // 50: agentregistry.v1.DiscoveryService.GetAgent:output_type -> agentregistry.v1.DiscoveryServiceGetAgentResponse
+	18, // 51: agentregistry.v1.DiscoveryService.ListAgents:output_type -> agentregistry.v1.ListAgentsResponse
+	20, // 52: agentregistry.v1.DiscoveryService.SemanticSearch:output_type -> agentregistry.v1.SemanticSearchResponse
+	22, // 53: agentregistry.v1.DiscoveryService.Watch:output_type -> agentregistry.v1.WatchResponse
+	24, // 54: agentregistry.v1.AccessAgreementService.RequestAccess:output_type -> agentregistry.v1.RequestAccessResponse
+	26, // 55: agentregistry.v1.AccessAgreementService.ListPending:output_type -> agentregistry.v1.ListPendingResponse
+	28, // 56: agentregistry.v1.AccessAgreementService.ApproveAccess:output_type -> agentregistry.v1.ApproveAccessResponse
+	30, // 57: agentregistry.v1.AccessAgreementService.DenyAccess:output_type -> agentregistry.v1.DenyAccessResponse
+	32, // 58: agentregistry.v1.AccessAgreementService.RevokeAccess:output_type -> agentregistry.v1.RevokeAccessResponse
+	34, // 59: agentregistry.v1.AccessAgreementService.ListAgreements:output_type -> agentregistry.v1.ListAgreementsResponse
+	36, // 60: agentregistry.v1.AccessAgreementService.ResolveEndpoint:output_type -> agentregistry.v1.ResolveEndpointResponse
+	38, // 61: agentregistry.v1.AccessAgreementService.GetAgreement:output_type -> agentregistry.v1.GetAgreementResponse
+	43, // [43:62] is the sub-list for method output_type
+	24, // [24:43] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_agentregistry_v1_registry_proto_init() }
@@ -1410,9 +2326,9 @@ func file_agentregistry_v1_registry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agentregistry_v1_registry_proto_rawDesc), len(file_agentregistry_v1_registry_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   38,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   3,
 		},
 		GoTypes:           file_agentregistry_v1_registry_proto_goTypes,
 		DependencyIndexes: file_agentregistry_v1_registry_proto_depIdxs,

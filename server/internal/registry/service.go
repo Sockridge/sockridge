@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+
 	"time"
 
 	"connectrpc.com/connect"
@@ -14,17 +15,19 @@ import (
 	"github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1/registryv1connect"
 	"github.com/utsav-develops/SocialAgents/server/internal/auth"
 	"github.com/utsav-develops/SocialAgents/server/internal/embedder"
+	"github.com/utsav-develops/SocialAgents/server/internal/gatekeeper"
 	"github.com/utsav-develops/SocialAgents/server/internal/store"
 	"github.com/utsav-develops/SocialAgents/server/middleware"
 )
 
 type Service struct {
-	agents     store.AgentStore
-	publishers store.PublisherStore
-	cache      store.CacheStore
-	vectors    store.VectorStore
-	auth       *auth.Service
-	embedder   *embedder.Client
+	agents      store.AgentStore
+	publishers  store.PublisherStore
+	cache       store.CacheStore
+	vectors     store.VectorStore
+	auth        *auth.Service
+	embedder    *embedder.Client
+	gatekeeper  *gatekeeper.Service
 }
 
 func New(
@@ -34,6 +37,7 @@ func New(
 	vectors store.VectorStore,
 	authSvc *auth.Service,
 	embedderClient *embedder.Client,
+	gateKeeperSvc *gatekeeper.Service,
 ) *Service {
 	return &Service{
 		agents:     agents,
@@ -42,6 +46,7 @@ func New(
 		vectors:    vectors,
 		auth:       authSvc,
 		embedder:   embedderClient,
+		gatekeeper: gateKeeperSvc,
 	}
 }
 
@@ -140,7 +145,8 @@ func (s *Service) PublishAgent(
 
 	agent.Id = uuid.NewString()
 	agent.PublisherId = publisherID
-	agent.Status = registryv1.AgentStatus_AGENT_STATUS_ACTIVE
+	// start as PENDING — gatekeeper will update to ACTIVE or REJECTED
+	agent.Status = registryv1.AgentStatus_AGENT_STATUS_PENDING
 
 	if err := s.agents.Save(ctx, agent); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("saving agent: %w", err))
@@ -148,9 +154,11 @@ func (s *Service) PublishAgent(
 
 	_ = s.cache.SetAgent(ctx, agent)
 	if err := s.embedSkills(ctx, agent); err != nil {
-		// log but don't fail the publish — semantic search degrades gracefully
-		fmt.Printf("[WARN] embedSkills failed for agent %s: %v", agent.Id, err)
+		fmt.Printf("[WARN] embedSkills failed for agent %s: %v\n", agent.Id, err)
 	}
+
+	// run gatekeeper async — updates status to ACTIVE or REJECTED
+	go s.runGatekeeper(agent)
 
 	return connect.NewResponse(&registryv1.PublishAgentResponse{
 		AgentId: agent.Id,
@@ -225,6 +233,11 @@ func (s *Service) GetAgent(
 	if err != nil {
 		return nil, connect.NewError(connect.CodeNotFound, err)
 	}
+	// only the owning publisher sees their own URL
+	publisherID, _ := middleware.PublisherIDFromCtx(ctx)
+	if agent.PublisherId != publisherID {
+		agent = stripURL(agent)
+	}
 	return connect.NewResponse(&registryv1.RegistryServiceGetAgentResponse{Agent: agent}), nil
 }
 
@@ -281,4 +294,63 @@ func (s *Service) embedSkills(ctx context.Context, agent *registryv1.AgentCard) 
 		}
 	}
 	return nil
+}
+
+// stripURL removes the endpoint URL before returning to non-agreement callers.
+func stripURL(agent *registryv1.AgentCard) *registryv1.AgentCard {
+	if agent == nil {
+		return nil
+	}
+	copy := *agent
+	copy.Url = ""
+	copy.Interfaces = nil
+	return &copy
+}
+
+// runGatekeeper runs the full validation pipeline in a background goroutine.
+// Updates the agent status to ACTIVE or REJECTED based on the result.
+func (s *Service) runGatekeeper(agent *registryv1.AgentCard) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if s.gatekeeper == nil {
+		// no gatekeeper configured — auto-approve
+		agent.Status = registryv1.AgentStatus_AGENT_STATUS_ACTIVE
+		_ = s.agents.Update(ctx, agent)
+		_ = s.cache.DeleteAgent(ctx, agent.Id)
+		return
+	}
+
+	result, err := s.gatekeeper.Evaluate(ctx, agent)
+	if err != nil {
+		fmt.Printf("[WARN] gatekeeper evaluation failed for agent %s: %v\n", agent.Id, err)
+		// fail open — approve rather than leave stuck in PENDING
+		agent.Status = registryv1.AgentStatus_AGENT_STATUS_ACTIVE
+	} else {
+		agent.GatekeeperResult = result
+		if result.Approved {
+			agent.Status = registryv1.AgentStatus_AGENT_STATUS_ACTIVE
+		} else {
+			agent.Status = registryv1.AgentStatus_AGENT_STATUS_REJECTED
+		}
+	}
+
+	_ = s.agents.Update(ctx, agent)
+	_ = s.cache.DeleteAgent(ctx, agent.Id)
+
+	fmt.Printf("[INFO] gatekeeper result for agent %s: approved=%v score=%.2f reason=%q\n",
+		agent.Id, agent.Status == registryv1.AgentStatus_AGENT_STATUS_ACTIVE,
+		func() float32 {
+			if agent.GatekeeperResult != nil {
+				return agent.GatekeeperResult.ConfidenceScore
+			}
+			return 0
+		}(),
+		func() string {
+			if agent.GatekeeperResult != nil {
+				return agent.GatekeeperResult.Reason
+			}
+			return "no gatekeeper"
+		}(),
+	)
 }

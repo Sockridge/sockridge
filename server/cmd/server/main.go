@@ -12,10 +12,12 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1/registryv1connect"
+	"github.com/utsav-develops/SocialAgents/server/internal/access"
 	"github.com/utsav-develops/SocialAgents/server/internal/auth"
 	"github.com/utsav-develops/SocialAgents/server/internal/config"
 	"github.com/utsav-develops/SocialAgents/server/internal/discovery"
 	"github.com/utsav-develops/SocialAgents/server/internal/embedder"
+	"github.com/utsav-develops/SocialAgents/server/internal/gatekeeper"
 	"github.com/utsav-develops/SocialAgents/server/internal/registry"
 	"github.com/utsav-develops/SocialAgents/server/internal/store"
 	"github.com/utsav-develops/SocialAgents/server/middleware"
@@ -57,14 +59,24 @@ func main() {
 	}
 	defer vectorStore.Close()
 
-	// ── Embedder sidecar ──────────────────────────────────────────────────────
+	// ── Embedder ──────────────────────────────────────────────────────────────
 	embedderClient := embedder.New(cfg.Embedder.URL)
 	logger.Info("embedder configured", "url", cfg.Embedder.URL)
 
+	// ── Gatekeeper ────────────────────────────────────────────────────────────
+	var gatekeeperSvc *gatekeeper.Service
+	if cfg.Gatekeeper.GroqKey != "" {
+		gatekeeperSvc = gatekeeper.New(cfg.Gatekeeper.GroqKey)
+		logger.Info("gatekeeper configured with AI scoring")
+	} else {
+		logger.Info("gatekeeper running without AI scoring (set AGENTREGISTRY_GATEKEEPER_GROQ_KEY to enable)")
+	}
+
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := auth.New(&cfg.Auth, redisStore)
-	registrySvc := registry.New(scyllaStore, scyllaStore, redisStore, vectorStore, authSvc, embedderClient)
+	registrySvc := registry.New(scyllaStore, scyllaStore, redisStore, vectorStore, authSvc, embedderClient, gatekeeperSvc)
 	discoverySvc := discovery.New(scyllaStore, redisStore, vectorStore, embedderClient)
+	accessSvc := access.New(scyllaStore, scyllaStore, scyllaStore)
 
 	// ── Interceptors ─────────────────────────────────────────────────────────
 	interceptors := connect.WithInterceptors(
@@ -75,6 +87,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle(registryv1connect.NewRegistryServiceHandler(registrySvc, interceptors))
 	mux.Handle(registryv1connect.NewDiscoveryServiceHandler(discoverySvc))
+	mux.Handle(registryv1connect.NewAccessAgreementServiceHandler(accessSvc, interceptors))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})

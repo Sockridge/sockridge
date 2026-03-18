@@ -9,12 +9,13 @@ import (
 )
 
 type Config struct {
-	Server    ServerConfig
-	Scylla    ScyllaConfig
-	Redis     RedisConfig
-	Postgres  PostgresConfig
-	Auth      AuthConfig
-	Embedder  EmbedderConfig
+	Server     ServerConfig
+	Scylla     ScyllaConfig
+	Redis      RedisConfig
+	Postgres   PostgresConfig
+	Auth       AuthConfig
+	Embedder   EmbedderConfig
+	Gatekeeper GatekeeperConfig
 }
 
 type ServerConfig struct {
@@ -42,6 +43,10 @@ type PostgresConfig struct {
 
 type EmbedderConfig struct {
 	URL string `mapstructure:"url"`
+}
+
+type GatekeeperConfig struct {
+	GroqKey string `mapstructure:"groq_key"`
 }
 
 type AuthConfig struct {
@@ -98,6 +103,9 @@ func Load() (*Config, error) {
 	}
 	if url := os.Getenv("AGENTREGISTRY_EMBEDDER_URL"); url != "" {
 		cfg.Embedder.URL = url
+	}
+	if key := os.Getenv("AGENTREGISTRY_GATEKEEPER_GROQ_KEY"); key != "" {
+		cfg.Gatekeeper.GroqKey = key
 	}
 
 	return &cfg, nil

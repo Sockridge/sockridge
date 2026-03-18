@@ -16,10 +16,12 @@ enum TransportType {
 }
 
 enum AgentStatus {
-  AGENT_STATUS_UNSPECIFIED = 0;
-  AGENT_STATUS_ACTIVE      = 1;
-  AGENT_STATUS_INACTIVE    = 2;
-  AGENT_STATUS_DEPRECATED  = 3;
+  AGENT_STATUS_UNSPECIFIED  = 0;
+  AGENT_STATUS_PENDING      = 1; // submitted, gatekeeper running
+  AGENT_STATUS_ACTIVE       = 2; // approved and live
+  AGENT_STATUS_REJECTED     = 3; // gatekeeper rejected
+  AGENT_STATUS_INACTIVE     = 4; // was active, now unreachable
+  AGENT_STATUS_DEPRECATED   = 5; // manually deprecated by publisher
 }
 
 enum InputOutputMode {
@@ -28,27 +30,24 @@ enum InputOutputMode {
   INPUT_OUTPUT_MODE_FILE        = 2;
   INPUT_OUTPUT_MODE_IMAGE       = 3;
   INPUT_OUTPUT_MODE_AUDIO       = 4;
-  INPUT_OUTPUT_MODE_STRUCTURED  = 5; // protobuf/json structured payloads
+  INPUT_OUTPUT_MODE_STRUCTURED  = 5;
 }
 
 // ─── Core Models ─────────────────────────────────────────────────────────────
 
 message Skill {
-  string   id          = 1; // machine-readable unique id e.g. "fhir.lab.analyze"
-  string   name        = 2;
-  string   description = 3;
-  repeated string tags = 4;
-
-  // capability embedding hint — used by pgvector for semantic discovery
-  // populated by the server, not the publisher
-  repeated float embedding = 5 [packed = true];
+  string          id          = 1;
+  string          name        = 2;
+  string          description = 3;
+  repeated string tags        = 4;
+  repeated float  embedding   = 5 [packed = true]; // server-populated
 }
 
 message Capabilities {
-  bool push_notifications  = 1;
-  bool streaming           = 2; // supports server-streaming responses
-  bool multi_turn          = 3; // maintains conversation state
-  bool tool_use            = 4; // can invoke external tools/MCP
+  bool push_notifications = 1;
+  bool streaming          = 2;
+  bool multi_turn         = 3;
+  bool tool_use           = 4;
 }
 
 message Interface {
@@ -57,44 +56,89 @@ message Interface {
   bool          primary   = 3;
 }
 
-message AgentCard {
-  string   id               = 1; // uuid, assigned by registry on first publish
-  string   name             = 2;
-  string   description      = 3;
-  string   version          = 4; // semver e.g. "1.2.0"
-  string   protocol_version = 5; // A2A protocol version e.g. "0.3.0"
+// GatekeeperResult is the output of the automated validation pipeline.
+// Stored alongside the AgentCard and visible to consumers.
+message GatekeeperResult {
+  bool   approved        = 1;
+  float  confidence_score = 2; // 0.0 - 1.0
+  string reason          = 3; // human-readable explanation
+  bool   reachable       = 4; // did the ping succeed?
+  int32  ping_latency_ms = 5; // response time in ms
+  google.protobuf.Timestamp evaluated_at = 6;
+}
 
-  repeated Interface        interfaces         = 6;
-  repeated Skill            skills             = 7;
-  Capabilities              capabilities       = 8;
-  repeated InputOutputMode  default_input_modes  = 9;
-  repeated InputOutputMode  default_output_modes = 10;
+message AgentCard {
+  string id               = 1;
+  string name             = 2;
+  string description      = 3;
+  string version          = 4;
+  string protocol_version = 5;
+  string url              = 6; // primary endpoint url
+
+  repeated Interface       interfaces           = 7;
+  repeated Skill           skills               = 8;
+  Capabilities             capabilities         = 9;
+  repeated InputOutputMode default_input_modes  = 10;
+  repeated InputOutputMode default_output_modes = 11;
 
   // identity
-  string publisher_id = 11; // links to PublisherAccount.id
-  string public_key   = 12; // Ed25519 public key (base64) used to verify updates
+  string publisher_id = 12;
+  string public_key   = 13;
 
   // lifecycle
-  AgentStatus                  status     = 13;
-  google.protobuf.Timestamp    created_at = 14;
-  google.protobuf.Timestamp    updated_at = 15;
+  AgentStatus               status             = 14;
+  GatekeeperResult          gatekeeper_result  = 15; // populated after validation
+  google.protobuf.Timestamp created_at         = 16;
+  google.protobuf.Timestamp updated_at         = 17;
 
-  // arbitrary binary metadata — for domain-specific extensions (e.g. SHARP context)
-  bytes metadata = 16;
+  bytes metadata = 18;
 }
 
 // ─── Auth Models ─────────────────────────────────────────────────────────────
 
 message PublisherAccount {
-  string id         = 1; // uuid
-  string handle     = 2; // e.g. "utsav" — unique, human-chosen
-  string public_key = 3; // Ed25519 public key (base64)
-
+  string id         = 1;
+  string handle     = 2;
+  string public_key = 3;
   google.protobuf.Timestamp created_at = 4;
 }
 
 message SignedPayload {
-  bytes  payload   = 1; // serialized protobuf message
-  bytes  signature = 2; // Ed25519 signature of payload
-  string key_id    = 3; // which public key was used (publisher_id)
+  bytes  payload   = 1;
+  bytes  signature = 2;
+  string key_id    = 3;
+}
+
+// ─── Access Token Models ──────────────────────────────────────────────────────
+
+// AccessToken is issued to a consumer (human or agent) granting them
+// the right to retrieve an agent's endpoint URL and communicate with it.
+message AccessToken {
+  string id          = 1; // uuid
+  string agent_id    = 2; // which agent this grants access to
+  string consumer_id = 3; // who requested it (publisher_id or external id)
+  string token       = 4; // the actual bearer token value
+  google.protobuf.Timestamp expires_at  = 5;
+  google.protobuf.Timestamp created_at  = 6;
+}
+
+// ─── Access Agreement Models ──────────────────────────────────────────────────
+
+enum AgreementStatus {
+  AGREEMENT_STATUS_UNSPECIFIED = 0;
+  AGREEMENT_STATUS_PENDING     = 1; // request sent, waiting for approval
+  AGREEMENT_STATUS_ACTIVE      = 2; // approved, shared key generated
+  AGREEMENT_STATUS_DENIED      = 3; // rejected by receiving publisher
+  AGREEMENT_STATUS_REVOKED     = 4; // was active, one side revoked it
+}
+
+message AccessAgreement {
+  string          id                = 1; // uuid
+  string          requester_id      = 2; // publisher who sent the request
+  string          receiver_id       = 3; // publisher who approves/denies
+  string          message           = 4; // "why I want to connect"
+  AgreementStatus status            = 5;
+  string          shared_key        = 6; // set on approval, same for both sides
+  google.protobuf.Timestamp requested_at = 7;
+  google.protobuf.Timestamp resolved_at  = 8; // when approved/denied/revoked
 }

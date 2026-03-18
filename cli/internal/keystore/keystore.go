@@ -11,10 +11,19 @@ import (
 )
 
 const (
-	dirName         = ".agentctl"
+	defaultDirName  = ".agentctl"
 	keyFile         = "ed25519.key"
 	credentialsFile = "credentials.json"
 )
+
+// configDir is the active config directory — overridden by --config flag
+var configDir = ""
+
+// SetConfigDir overrides the default ~/.agentctl directory.
+// Called from root command when --config flag is set.
+func SetConfigDir(dir string) {
+	configDir = dir
+}
 
 type Credentials struct {
 	PublisherID  string `json:"publisher_id"`
@@ -24,12 +33,10 @@ type Credentials struct {
 }
 
 type KeyPair struct {
-	PublicKey  string // base64
+	PublicKey  string
 	PrivateKey ed25519.PrivateKey
 }
 
-// Generate creates a new Ed25519 keypair and saves the private key to disk.
-// Returns the public key (base64) for registration with the server.
 func Generate() (*KeyPair, error) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -41,7 +48,6 @@ func Generate() (*KeyPair, error) {
 		return nil, err
 	}
 
-	// save private key — chmod 600, never readable by others
 	keyPath := filepath.Join(dir, keyFile)
 	encoded := base64.StdEncoding.EncodeToString(priv)
 	if err := os.WriteFile(keyPath, []byte(encoded), 0600); err != nil {
@@ -54,7 +60,6 @@ func Generate() (*KeyPair, error) {
 	}, nil
 }
 
-// Load reads the private key from disk and derives the public key.
 func Load() (*KeyPair, error) {
 	dir, err := ensureDir()
 	if err != nil {
@@ -84,12 +89,10 @@ func Load() (*KeyPair, error) {
 	}, nil
 }
 
-// Sign signs a message with the loaded private key.
 func (k *KeyPair) Sign(message []byte) []byte {
 	return ed25519.Sign(k.PrivateKey, message)
 }
 
-// SaveCredentials persists publisher credentials after successful registration.
 func SaveCredentials(creds *Credentials) error {
 	dir, err := ensureDir()
 	if err != nil {
@@ -105,11 +108,9 @@ func SaveCredentials(creds *Credentials) error {
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		return fmt.Errorf("writing credentials: %w", err)
 	}
-
 	return nil
 }
 
-// LoadCredentials reads saved publisher credentials from disk.
 func LoadCredentials() (*Credentials, error) {
 	dir, err := ensureDir()
 	if err != nil {
@@ -129,20 +130,26 @@ func LoadCredentials() (*Credentials, error) {
 	if err := json.Unmarshal(data, &creds); err != nil {
 		return nil, fmt.Errorf("parsing credentials: %w", err)
 	}
-
 	return &creds, nil
 }
 
 func ensureDir() (string, error) {
+	// use override if set via --config flag
+	if configDir != "" {
+		if err := os.MkdirAll(configDir, 0700); err != nil {
+			return "", fmt.Errorf("creating config dir: %w", err)
+		}
+		return configDir, nil
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("finding home dir: %w", err)
 	}
 
-	dir := filepath.Join(home, dirName)
+	dir := filepath.Join(home, defaultDirName)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", fmt.Errorf("creating %s: %w", dir, err)
 	}
-
 	return dir, nil
 }

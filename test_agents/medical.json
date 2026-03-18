@@ -1,0 +1,19 @@
+{
+  "name": "Medical Assistant Agent",
+  "description": "Provides general medical guidance (non-diagnostic)",
+  "protocolVersion": "0.3.0",
+  "version": "0.1.0",
+  "url": "https://utsav.work",
+  "skills": [
+    {
+      "id": "medical",
+      "name": "Medical Advice",
+      "description": "General health guidance and symptom info",
+      "tags": ["health", "medical"]
+    }
+  ],
+  "capabilities": {
+    "pushNotifications": false,
+    "streaming": true
+  }
+}

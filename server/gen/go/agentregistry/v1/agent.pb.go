@@ -78,24 +78,30 @@ type AgentStatus int32
 
 const (
 	AgentStatus_AGENT_STATUS_UNSPECIFIED AgentStatus = 0
-	AgentStatus_AGENT_STATUS_ACTIVE      AgentStatus = 1
-	AgentStatus_AGENT_STATUS_INACTIVE    AgentStatus = 2
-	AgentStatus_AGENT_STATUS_DEPRECATED  AgentStatus = 3
+	AgentStatus_AGENT_STATUS_PENDING     AgentStatus = 1 // submitted, gatekeeper running
+	AgentStatus_AGENT_STATUS_ACTIVE      AgentStatus = 2 // approved and live
+	AgentStatus_AGENT_STATUS_REJECTED    AgentStatus = 3 // gatekeeper rejected
+	AgentStatus_AGENT_STATUS_INACTIVE    AgentStatus = 4 // was active, now unreachable
+	AgentStatus_AGENT_STATUS_DEPRECATED  AgentStatus = 5 // manually deprecated by publisher
 )
 
 // Enum value maps for AgentStatus.
 var (
 	AgentStatus_name = map[int32]string{
 		0: "AGENT_STATUS_UNSPECIFIED",
-		1: "AGENT_STATUS_ACTIVE",
-		2: "AGENT_STATUS_INACTIVE",
-		3: "AGENT_STATUS_DEPRECATED",
+		1: "AGENT_STATUS_PENDING",
+		2: "AGENT_STATUS_ACTIVE",
+		3: "AGENT_STATUS_REJECTED",
+		4: "AGENT_STATUS_INACTIVE",
+		5: "AGENT_STATUS_DEPRECATED",
 	}
 	AgentStatus_value = map[string]int32{
 		"AGENT_STATUS_UNSPECIFIED": 0,
-		"AGENT_STATUS_ACTIVE":      1,
-		"AGENT_STATUS_INACTIVE":    2,
-		"AGENT_STATUS_DEPRECATED":  3,
+		"AGENT_STATUS_PENDING":     1,
+		"AGENT_STATUS_ACTIVE":      2,
+		"AGENT_STATUS_REJECTED":    3,
+		"AGENT_STATUS_INACTIVE":    4,
+		"AGENT_STATUS_DEPRECATED":  5,
 	}
 )
 
@@ -134,7 +140,7 @@ const (
 	InputOutputMode_INPUT_OUTPUT_MODE_FILE        InputOutputMode = 2
 	InputOutputMode_INPUT_OUTPUT_MODE_IMAGE       InputOutputMode = 3
 	InputOutputMode_INPUT_OUTPUT_MODE_AUDIO       InputOutputMode = 4
-	InputOutputMode_INPUT_OUTPUT_MODE_STRUCTURED  InputOutputMode = 5 // protobuf/json structured payloads
+	InputOutputMode_INPUT_OUTPUT_MODE_STRUCTURED  InputOutputMode = 5
 )
 
 // Enum value maps for InputOutputMode.
@@ -184,15 +190,68 @@ func (InputOutputMode) EnumDescriptor() ([]byte, []int) {
 	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{2}
 }
 
+type AgreementStatus int32
+
+const (
+	AgreementStatus_AGREEMENT_STATUS_UNSPECIFIED AgreementStatus = 0
+	AgreementStatus_AGREEMENT_STATUS_PENDING     AgreementStatus = 1 // request sent, waiting for approval
+	AgreementStatus_AGREEMENT_STATUS_ACTIVE      AgreementStatus = 2 // approved, shared key generated
+	AgreementStatus_AGREEMENT_STATUS_DENIED      AgreementStatus = 3 // rejected by receiving publisher
+	AgreementStatus_AGREEMENT_STATUS_REVOKED     AgreementStatus = 4 // was active, one side revoked it
+)
+
+// Enum value maps for AgreementStatus.
+var (
+	AgreementStatus_name = map[int32]string{
+		0: "AGREEMENT_STATUS_UNSPECIFIED",
+		1: "AGREEMENT_STATUS_PENDING",
+		2: "AGREEMENT_STATUS_ACTIVE",
+		3: "AGREEMENT_STATUS_DENIED",
+		4: "AGREEMENT_STATUS_REVOKED",
+	}
+	AgreementStatus_value = map[string]int32{
+		"AGREEMENT_STATUS_UNSPECIFIED": 0,
+		"AGREEMENT_STATUS_PENDING":     1,
+		"AGREEMENT_STATUS_ACTIVE":      2,
+		"AGREEMENT_STATUS_DENIED":      3,
+		"AGREEMENT_STATUS_REVOKED":     4,
+	}
+)
+
+func (x AgreementStatus) Enum() *AgreementStatus {
+	p := new(AgreementStatus)
+	*p = x
+	return p
+}
+
+func (x AgreementStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AgreementStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_agentregistry_v1_agent_proto_enumTypes[3].Descriptor()
+}
+
+func (AgreementStatus) Type() protoreflect.EnumType {
+	return &file_agentregistry_v1_agent_proto_enumTypes[3]
+}
+
+func (x AgreementStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AgreementStatus.Descriptor instead.
+func (AgreementStatus) EnumDescriptor() ([]byte, []int) {
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{3}
+}
+
 type Skill struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // machine-readable unique id e.g. "fhir.lab.analyze"
-	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Tags        []string               `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`
-	// capability embedding hint — used by pgvector for semantic discovery
-	// populated by the server, not the publisher
-	Embedding     []float32 `protobuf:"fixed32,5,rep,packed,name=embedding,proto3" json:"embedding,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Tags          []string               `protobuf:"bytes,4,rep,name=tags,proto3" json:"tags,omitempty"`
+	Embedding     []float32              `protobuf:"fixed32,5,rep,packed,name=embedding,proto3" json:"embedding,omitempty"` // server-populated
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -265,9 +324,9 @@ func (x *Skill) GetEmbedding() []float32 {
 type Capabilities struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	PushNotifications bool                   `protobuf:"varint,1,opt,name=push_notifications,json=pushNotifications,proto3" json:"push_notifications,omitempty"`
-	Streaming         bool                   `protobuf:"varint,2,opt,name=streaming,proto3" json:"streaming,omitempty"`                  // supports server-streaming responses
-	MultiTurn         bool                   `protobuf:"varint,3,opt,name=multi_turn,json=multiTurn,proto3" json:"multi_turn,omitempty"` // maintains conversation state
-	ToolUse           bool                   `protobuf:"varint,4,opt,name=tool_use,json=toolUse,proto3" json:"tool_use,omitempty"`       // can invoke external tools/MCP
+	Streaming         bool                   `protobuf:"varint,2,opt,name=streaming,proto3" json:"streaming,omitempty"`
+	MultiTurn         bool                   `protobuf:"varint,3,opt,name=multi_turn,json=multiTurn,proto3" json:"multi_turn,omitempty"`
+	ToolUse           bool                   `protobuf:"varint,4,opt,name=tool_use,json=toolUse,proto3" json:"tool_use,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -390,34 +449,121 @@ func (x *Interface) GetPrimary() bool {
 	return false
 }
 
+// GatekeeperResult is the output of the automated validation pipeline.
+// Stored alongside the AgentCard and visible to consumers.
+type GatekeeperResult struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Approved        bool                   `protobuf:"varint,1,opt,name=approved,proto3" json:"approved,omitempty"`
+	ConfidenceScore float32                `protobuf:"fixed32,2,opt,name=confidence_score,json=confidenceScore,proto3" json:"confidence_score,omitempty"` // 0.0 - 1.0
+	Reason          string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`                                            // human-readable explanation
+	Reachable       bool                   `protobuf:"varint,4,opt,name=reachable,proto3" json:"reachable,omitempty"`                                     // did the ping succeed?
+	PingLatencyMs   int32                  `protobuf:"varint,5,opt,name=ping_latency_ms,json=pingLatencyMs,proto3" json:"ping_latency_ms,omitempty"`      // response time in ms
+	EvaluatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=evaluated_at,json=evaluatedAt,proto3" json:"evaluated_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GatekeeperResult) Reset() {
+	*x = GatekeeperResult{}
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GatekeeperResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GatekeeperResult) ProtoMessage() {}
+
+func (x *GatekeeperResult) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GatekeeperResult.ProtoReflect.Descriptor instead.
+func (*GatekeeperResult) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GatekeeperResult) GetApproved() bool {
+	if x != nil {
+		return x.Approved
+	}
+	return false
+}
+
+func (x *GatekeeperResult) GetConfidenceScore() float32 {
+	if x != nil {
+		return x.ConfidenceScore
+	}
+	return 0
+}
+
+func (x *GatekeeperResult) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *GatekeeperResult) GetReachable() bool {
+	if x != nil {
+		return x.Reachable
+	}
+	return false
+}
+
+func (x *GatekeeperResult) GetPingLatencyMs() int32 {
+	if x != nil {
+		return x.PingLatencyMs
+	}
+	return 0
+}
+
+func (x *GatekeeperResult) GetEvaluatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EvaluatedAt
+	}
+	return nil
+}
+
 type AgentCard struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	Id                 string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // uuid, assigned by registry on first publish
+	Id                 string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name               string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description        string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Version            string                 `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`                                        // semver e.g. "1.2.0"
-	ProtocolVersion    string                 `protobuf:"bytes,5,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"` // A2A protocol version e.g. "0.3.0"
-	Interfaces         []*Interface           `protobuf:"bytes,6,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
-	Skills             []*Skill               `protobuf:"bytes,7,rep,name=skills,proto3" json:"skills,omitempty"`
-	Capabilities       *Capabilities          `protobuf:"bytes,8,opt,name=capabilities,proto3" json:"capabilities,omitempty"`
-	DefaultInputModes  []InputOutputMode      `protobuf:"varint,9,rep,packed,name=default_input_modes,json=defaultInputModes,proto3,enum=agentregistry.v1.InputOutputMode" json:"default_input_modes,omitempty"`
-	DefaultOutputModes []InputOutputMode      `protobuf:"varint,10,rep,packed,name=default_output_modes,json=defaultOutputModes,proto3,enum=agentregistry.v1.InputOutputMode" json:"default_output_modes,omitempty"`
+	Version            string                 `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
+	ProtocolVersion    string                 `protobuf:"bytes,5,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
+	Url                string                 `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"` // primary endpoint url
+	Interfaces         []*Interface           `protobuf:"bytes,7,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
+	Skills             []*Skill               `protobuf:"bytes,8,rep,name=skills,proto3" json:"skills,omitempty"`
+	Capabilities       *Capabilities          `protobuf:"bytes,9,opt,name=capabilities,proto3" json:"capabilities,omitempty"`
+	DefaultInputModes  []InputOutputMode      `protobuf:"varint,10,rep,packed,name=default_input_modes,json=defaultInputModes,proto3,enum=agentregistry.v1.InputOutputMode" json:"default_input_modes,omitempty"`
+	DefaultOutputModes []InputOutputMode      `protobuf:"varint,11,rep,packed,name=default_output_modes,json=defaultOutputModes,proto3,enum=agentregistry.v1.InputOutputMode" json:"default_output_modes,omitempty"`
 	// identity
-	PublisherId string `protobuf:"bytes,11,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"` // links to PublisherAccount.id
-	PublicKey   string `protobuf:"bytes,12,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`       // Ed25519 public key (base64) used to verify updates
+	PublisherId string `protobuf:"bytes,12,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	PublicKey   string `protobuf:"bytes,13,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	// lifecycle
-	Status    AgentStatus            `protobuf:"varint,13,opt,name=status,proto3,enum=agentregistry.v1.AgentStatus" json:"status,omitempty"`
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	// arbitrary binary metadata — for domain-specific extensions (e.g. SHARP context)
-	Metadata      []byte `protobuf:"bytes,16,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Status           AgentStatus            `protobuf:"varint,14,opt,name=status,proto3,enum=agentregistry.v1.AgentStatus" json:"status,omitempty"`
+	GatekeeperResult *GatekeeperResult      `protobuf:"bytes,15,opt,name=gatekeeper_result,json=gatekeeperResult,proto3" json:"gatekeeper_result,omitempty"` // populated after validation
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Metadata         []byte                 `protobuf:"bytes,18,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *AgentCard) Reset() {
 	*x = AgentCard{}
-	mi := &file_agentregistry_v1_agent_proto_msgTypes[3]
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +575,7 @@ func (x *AgentCard) String() string {
 func (*AgentCard) ProtoMessage() {}
 
 func (x *AgentCard) ProtoReflect() protoreflect.Message {
-	mi := &file_agentregistry_v1_agent_proto_msgTypes[3]
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +588,7 @@ func (x *AgentCard) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentCard.ProtoReflect.Descriptor instead.
 func (*AgentCard) Descriptor() ([]byte, []int) {
-	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{3}
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *AgentCard) GetId() string {
@@ -476,6 +622,13 @@ func (x *AgentCard) GetVersion() string {
 func (x *AgentCard) GetProtocolVersion() string {
 	if x != nil {
 		return x.ProtocolVersion
+	}
+	return ""
+}
+
+func (x *AgentCard) GetUrl() string {
+	if x != nil {
+		return x.Url
 	}
 	return ""
 }
@@ -536,6 +689,13 @@ func (x *AgentCard) GetStatus() AgentStatus {
 	return AgentStatus_AGENT_STATUS_UNSPECIFIED
 }
 
+func (x *AgentCard) GetGatekeeperResult() *GatekeeperResult {
+	if x != nil {
+		return x.GatekeeperResult
+	}
+	return nil
+}
+
 func (x *AgentCard) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
@@ -559,9 +719,9 @@ func (x *AgentCard) GetMetadata() []byte {
 
 type PublisherAccount struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                // uuid
-	Handle        string                 `protobuf:"bytes,2,opt,name=handle,proto3" json:"handle,omitempty"`                        // e.g. "utsav" — unique, human-chosen
-	PublicKey     string                 `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"` // Ed25519 public key (base64)
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Handle        string                 `protobuf:"bytes,2,opt,name=handle,proto3" json:"handle,omitempty"`
+	PublicKey     string                 `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -569,7 +729,7 @@ type PublisherAccount struct {
 
 func (x *PublisherAccount) Reset() {
 	*x = PublisherAccount{}
-	mi := &file_agentregistry_v1_agent_proto_msgTypes[4]
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -581,7 +741,7 @@ func (x *PublisherAccount) String() string {
 func (*PublisherAccount) ProtoMessage() {}
 
 func (x *PublisherAccount) ProtoReflect() protoreflect.Message {
-	mi := &file_agentregistry_v1_agent_proto_msgTypes[4]
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -594,7 +754,7 @@ func (x *PublisherAccount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublisherAccount.ProtoReflect.Descriptor instead.
 func (*PublisherAccount) Descriptor() ([]byte, []int) {
-	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{4}
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PublisherAccount) GetId() string {
@@ -627,16 +787,16 @@ func (x *PublisherAccount) GetCreatedAt() *timestamppb.Timestamp {
 
 type SignedPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Payload       []byte                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`          // serialized protobuf message
-	Signature     []byte                 `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`      // Ed25519 signature of payload
-	KeyId         string                 `protobuf:"bytes,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"` // which public key was used (publisher_id)
+	Payload       []byte                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
+	Signature     []byte                 `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
+	KeyId         string                 `protobuf:"bytes,3,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SignedPayload) Reset() {
 	*x = SignedPayload{}
-	mi := &file_agentregistry_v1_agent_proto_msgTypes[5]
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -648,7 +808,7 @@ func (x *SignedPayload) String() string {
 func (*SignedPayload) ProtoMessage() {}
 
 func (x *SignedPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_agentregistry_v1_agent_proto_msgTypes[5]
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -661,7 +821,7 @@ func (x *SignedPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignedPayload.ProtoReflect.Descriptor instead.
 func (*SignedPayload) Descriptor() ([]byte, []int) {
-	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{5}
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SignedPayload) GetPayload() []byte {
@@ -685,6 +845,192 @@ func (x *SignedPayload) GetKeyId() string {
 	return ""
 }
 
+// AccessToken is issued to a consumer (human or agent) granting them
+// the right to retrieve an agent's endpoint URL and communicate with it.
+type AccessToken struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                   // uuid
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`          // which agent this grants access to
+	ConsumerId    string                 `protobuf:"bytes,3,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"` // who requested it (publisher_id or external id)
+	Token         string                 `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`                             // the actual bearer token value
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccessToken) Reset() {
+	*x = AccessToken{}
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessToken) ProtoMessage() {}
+
+func (x *AccessToken) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessToken.ProtoReflect.Descriptor instead.
+func (*AccessToken) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *AccessToken) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AccessToken) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *AccessToken) GetConsumerId() string {
+	if x != nil {
+		return x.ConsumerId
+	}
+	return ""
+}
+
+func (x *AccessToken) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *AccessToken) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *AccessToken) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type AccessAgreement struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                      // uuid
+	RequesterId   string                 `protobuf:"bytes,2,opt,name=requester_id,json=requesterId,proto3" json:"requester_id,omitempty"` // publisher who sent the request
+	ReceiverId    string                 `protobuf:"bytes,3,opt,name=receiver_id,json=receiverId,proto3" json:"receiver_id,omitempty"`    // publisher who approves/denies
+	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`                            // "why I want to connect"
+	Status        AgreementStatus        `protobuf:"varint,5,opt,name=status,proto3,enum=agentregistry.v1.AgreementStatus" json:"status,omitempty"`
+	SharedKey     string                 `protobuf:"bytes,6,opt,name=shared_key,json=sharedKey,proto3" json:"shared_key,omitempty"` // set on approval, same for both sides
+	RequestedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
+	ResolvedAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=resolved_at,json=resolvedAt,proto3" json:"resolved_at,omitempty"` // when approved/denied/revoked
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccessAgreement) Reset() {
+	*x = AccessAgreement{}
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessAgreement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessAgreement) ProtoMessage() {}
+
+func (x *AccessAgreement) ProtoReflect() protoreflect.Message {
+	mi := &file_agentregistry_v1_agent_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessAgreement.ProtoReflect.Descriptor instead.
+func (*AccessAgreement) Descriptor() ([]byte, []int) {
+	return file_agentregistry_v1_agent_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *AccessAgreement) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AccessAgreement) GetRequesterId() string {
+	if x != nil {
+		return x.RequesterId
+	}
+	return ""
+}
+
+func (x *AccessAgreement) GetReceiverId() string {
+	if x != nil {
+		return x.ReceiverId
+	}
+	return ""
+}
+
+func (x *AccessAgreement) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *AccessAgreement) GetStatus() AgreementStatus {
+	if x != nil {
+		return x.Status
+	}
+	return AgreementStatus_AGREEMENT_STATUS_UNSPECIFIED
+}
+
+func (x *AccessAgreement) GetSharedKey() string {
+	if x != nil {
+		return x.SharedKey
+	}
+	return ""
+}
+
+func (x *AccessAgreement) GetRequestedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RequestedAt
+	}
+	return nil
+}
+
+func (x *AccessAgreement) GetResolvedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ResolvedAt
+	}
+	return nil
+}
+
 var File_agentregistry_v1_agent_proto protoreflect.FileDescriptor
 
 const file_agentregistry_v1_agent_proto_rawDesc = "" +
@@ -705,30 +1051,39 @@ const file_agentregistry_v1_agent_proto_rawDesc = "" +
 	"\tInterface\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12=\n" +
 	"\ttransport\x18\x02 \x01(\x0e2\x1f.agentregistry.v1.TransportTypeR\ttransport\x12\x18\n" +
-	"\aprimary\x18\x03 \x01(\bR\aprimary\"\xfb\x05\n" +
+	"\aprimary\x18\x03 \x01(\bR\aprimary\"\xf6\x01\n" +
+	"\x10GatekeeperResult\x12\x1a\n" +
+	"\bapproved\x18\x01 \x01(\bR\bapproved\x12)\n" +
+	"\x10confidence_score\x18\x02 \x01(\x02R\x0fconfidenceScore\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x1c\n" +
+	"\treachable\x18\x04 \x01(\bR\treachable\x12&\n" +
+	"\x0fping_latency_ms\x18\x05 \x01(\x05R\rpingLatencyMs\x12=\n" +
+	"\fevaluated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vevaluatedAt\"\xde\x06\n" +
 	"\tAgentCard\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\tR\aversion\x12)\n" +
-	"\x10protocol_version\x18\x05 \x01(\tR\x0fprotocolVersion\x12;\n" +
+	"\x10protocol_version\x18\x05 \x01(\tR\x0fprotocolVersion\x12\x10\n" +
+	"\x03url\x18\x06 \x01(\tR\x03url\x12;\n" +
 	"\n" +
-	"interfaces\x18\x06 \x03(\v2\x1b.agentregistry.v1.InterfaceR\n" +
+	"interfaces\x18\a \x03(\v2\x1b.agentregistry.v1.InterfaceR\n" +
 	"interfaces\x12/\n" +
-	"\x06skills\x18\a \x03(\v2\x17.agentregistry.v1.SkillR\x06skills\x12B\n" +
-	"\fcapabilities\x18\b \x01(\v2\x1e.agentregistry.v1.CapabilitiesR\fcapabilities\x12Q\n" +
-	"\x13default_input_modes\x18\t \x03(\x0e2!.agentregistry.v1.InputOutputModeR\x11defaultInputModes\x12S\n" +
-	"\x14default_output_modes\x18\n" +
-	" \x03(\x0e2!.agentregistry.v1.InputOutputModeR\x12defaultOutputModes\x12!\n" +
-	"\fpublisher_id\x18\v \x01(\tR\vpublisherId\x12\x1d\n" +
+	"\x06skills\x18\b \x03(\v2\x17.agentregistry.v1.SkillR\x06skills\x12B\n" +
+	"\fcapabilities\x18\t \x01(\v2\x1e.agentregistry.v1.CapabilitiesR\fcapabilities\x12Q\n" +
+	"\x13default_input_modes\x18\n" +
+	" \x03(\x0e2!.agentregistry.v1.InputOutputModeR\x11defaultInputModes\x12S\n" +
+	"\x14default_output_modes\x18\v \x03(\x0e2!.agentregistry.v1.InputOutputModeR\x12defaultOutputModes\x12!\n" +
+	"\fpublisher_id\x18\f \x01(\tR\vpublisherId\x12\x1d\n" +
 	"\n" +
-	"public_key\x18\f \x01(\tR\tpublicKey\x125\n" +
-	"\x06status\x18\r \x01(\x0e2\x1d.agentregistry.v1.AgentStatusR\x06status\x129\n" +
+	"public_key\x18\r \x01(\tR\tpublicKey\x125\n" +
+	"\x06status\x18\x0e \x01(\x0e2\x1d.agentregistry.v1.AgentStatusR\x06status\x12O\n" +
+	"\x11gatekeeper_result\x18\x0f \x01(\v2\".agentregistry.v1.GatekeeperResultR\x10gatekeeperResult\x129\n" +
 	"\n" +
-	"created_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1a\n" +
-	"\bmetadata\x18\x10 \x01(\fR\bmetadata\"\x94\x01\n" +
+	"updated_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1a\n" +
+	"\bmetadata\x18\x12 \x01(\fR\bmetadata\"\x94\x01\n" +
 	"\x10PublisherAccount\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06handle\x18\x02 \x01(\tR\x06handle\x12\x1d\n" +
@@ -739,24 +1094,54 @@ const file_agentregistry_v1_agent_proto_rawDesc = "" +
 	"\rSignedPayload\x12\x18\n" +
 	"\apayload\x18\x01 \x01(\fR\apayload\x12\x1c\n" +
 	"\tsignature\x18\x02 \x01(\fR\tsignature\x12\x15\n" +
-	"\x06key_id\x18\x03 \x01(\tR\x05keyId*~\n" +
+	"\x06key_id\x18\x03 \x01(\tR\x05keyId\"\xe5\x01\n" +
+	"\vAccessToken\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1f\n" +
+	"\vconsumer_id\x18\x03 \x01(\tR\n" +
+	"consumerId\x12\x14\n" +
+	"\x05token\x18\x04 \x01(\tR\x05token\x129\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xd5\x02\n" +
+	"\x0fAccessAgreement\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
+	"\frequester_id\x18\x02 \x01(\tR\vrequesterId\x12\x1f\n" +
+	"\vreceiver_id\x18\x03 \x01(\tR\n" +
+	"receiverId\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x129\n" +
+	"\x06status\x18\x05 \x01(\x0e2!.agentregistry.v1.AgreementStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"shared_key\x18\x06 \x01(\tR\tsharedKey\x12=\n" +
+	"\frequested_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vrequestedAt\x12;\n" +
+	"\vresolved_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"resolvedAt*~\n" +
 	"\rTransportType\x12\x1e\n" +
 	"\x1aTRANSPORT_TYPE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13TRANSPORT_TYPE_GRPC\x10\x01\x12\x17\n" +
 	"\x13TRANSPORT_TYPE_HTTP\x10\x02\x12\x1b\n" +
-	"\x17TRANSPORT_TYPE_GRPC_WEB\x10\x03*|\n" +
+	"\x17TRANSPORT_TYPE_GRPC_WEB\x10\x03*\xb1\x01\n" +
 	"\vAgentStatus\x12\x1c\n" +
-	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
-	"\x13AGENT_STATUS_ACTIVE\x10\x01\x12\x19\n" +
-	"\x15AGENT_STATUS_INACTIVE\x10\x02\x12\x1b\n" +
-	"\x17AGENT_STATUS_DEPRECATED\x10\x03*\xc8\x01\n" +
+	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14AGENT_STATUS_PENDING\x10\x01\x12\x17\n" +
+	"\x13AGENT_STATUS_ACTIVE\x10\x02\x12\x19\n" +
+	"\x15AGENT_STATUS_REJECTED\x10\x03\x12\x19\n" +
+	"\x15AGENT_STATUS_INACTIVE\x10\x04\x12\x1b\n" +
+	"\x17AGENT_STATUS_DEPRECATED\x10\x05*\xc8\x01\n" +
 	"\x0fInputOutputMode\x12!\n" +
 	"\x1dINPUT_OUTPUT_MODE_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16INPUT_OUTPUT_MODE_TEXT\x10\x01\x12\x1a\n" +
 	"\x16INPUT_OUTPUT_MODE_FILE\x10\x02\x12\x1b\n" +
 	"\x17INPUT_OUTPUT_MODE_IMAGE\x10\x03\x12\x1b\n" +
 	"\x17INPUT_OUTPUT_MODE_AUDIO\x10\x04\x12 \n" +
-	"\x1cINPUT_OUTPUT_MODE_STRUCTURED\x10\x05BRZPgithub.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1;registryv1b\x06proto3"
+	"\x1cINPUT_OUTPUT_MODE_STRUCTURED\x10\x05*\xa9\x01\n" +
+	"\x0fAgreementStatus\x12 \n" +
+	"\x1cAGREEMENT_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18AGREEMENT_STATUS_PENDING\x10\x01\x12\x1b\n" +
+	"\x17AGREEMENT_STATUS_ACTIVE\x10\x02\x12\x1b\n" +
+	"\x17AGREEMENT_STATUS_DENIED\x10\x03\x12\x1c\n" +
+	"\x18AGREEMENT_STATUS_REVOKED\x10\x04BRZPgithub.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1;registryv1b\x06proto3"
 
 var (
 	file_agentregistry_v1_agent_proto_rawDescOnce sync.Once
@@ -770,36 +1155,47 @@ func file_agentregistry_v1_agent_proto_rawDescGZIP() []byte {
 	return file_agentregistry_v1_agent_proto_rawDescData
 }
 
-var file_agentregistry_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_agentregistry_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_agentregistry_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_agentregistry_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_agentregistry_v1_agent_proto_goTypes = []any{
 	(TransportType)(0),            // 0: agentregistry.v1.TransportType
 	(AgentStatus)(0),              // 1: agentregistry.v1.AgentStatus
 	(InputOutputMode)(0),          // 2: agentregistry.v1.InputOutputMode
-	(*Skill)(nil),                 // 3: agentregistry.v1.Skill
-	(*Capabilities)(nil),          // 4: agentregistry.v1.Capabilities
-	(*Interface)(nil),             // 5: agentregistry.v1.Interface
-	(*AgentCard)(nil),             // 6: agentregistry.v1.AgentCard
-	(*PublisherAccount)(nil),      // 7: agentregistry.v1.PublisherAccount
-	(*SignedPayload)(nil),         // 8: agentregistry.v1.SignedPayload
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(AgreementStatus)(0),          // 3: agentregistry.v1.AgreementStatus
+	(*Skill)(nil),                 // 4: agentregistry.v1.Skill
+	(*Capabilities)(nil),          // 5: agentregistry.v1.Capabilities
+	(*Interface)(nil),             // 6: agentregistry.v1.Interface
+	(*GatekeeperResult)(nil),      // 7: agentregistry.v1.GatekeeperResult
+	(*AgentCard)(nil),             // 8: agentregistry.v1.AgentCard
+	(*PublisherAccount)(nil),      // 9: agentregistry.v1.PublisherAccount
+	(*SignedPayload)(nil),         // 10: agentregistry.v1.SignedPayload
+	(*AccessToken)(nil),           // 11: agentregistry.v1.AccessToken
+	(*AccessAgreement)(nil),       // 12: agentregistry.v1.AccessAgreement
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_agentregistry_v1_agent_proto_depIdxs = []int32{
 	0,  // 0: agentregistry.v1.Interface.transport:type_name -> agentregistry.v1.TransportType
-	5,  // 1: agentregistry.v1.AgentCard.interfaces:type_name -> agentregistry.v1.Interface
-	3,  // 2: agentregistry.v1.AgentCard.skills:type_name -> agentregistry.v1.Skill
-	4,  // 3: agentregistry.v1.AgentCard.capabilities:type_name -> agentregistry.v1.Capabilities
-	2,  // 4: agentregistry.v1.AgentCard.default_input_modes:type_name -> agentregistry.v1.InputOutputMode
-	2,  // 5: agentregistry.v1.AgentCard.default_output_modes:type_name -> agentregistry.v1.InputOutputMode
-	1,  // 6: agentregistry.v1.AgentCard.status:type_name -> agentregistry.v1.AgentStatus
-	9,  // 7: agentregistry.v1.AgentCard.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 8: agentregistry.v1.AgentCard.updated_at:type_name -> google.protobuf.Timestamp
-	9,  // 9: agentregistry.v1.PublisherAccount.created_at:type_name -> google.protobuf.Timestamp
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	13, // 1: agentregistry.v1.GatekeeperResult.evaluated_at:type_name -> google.protobuf.Timestamp
+	6,  // 2: agentregistry.v1.AgentCard.interfaces:type_name -> agentregistry.v1.Interface
+	4,  // 3: agentregistry.v1.AgentCard.skills:type_name -> agentregistry.v1.Skill
+	5,  // 4: agentregistry.v1.AgentCard.capabilities:type_name -> agentregistry.v1.Capabilities
+	2,  // 5: agentregistry.v1.AgentCard.default_input_modes:type_name -> agentregistry.v1.InputOutputMode
+	2,  // 6: agentregistry.v1.AgentCard.default_output_modes:type_name -> agentregistry.v1.InputOutputMode
+	1,  // 7: agentregistry.v1.AgentCard.status:type_name -> agentregistry.v1.AgentStatus
+	7,  // 8: agentregistry.v1.AgentCard.gatekeeper_result:type_name -> agentregistry.v1.GatekeeperResult
+	13, // 9: agentregistry.v1.AgentCard.created_at:type_name -> google.protobuf.Timestamp
+	13, // 10: agentregistry.v1.AgentCard.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 11: agentregistry.v1.PublisherAccount.created_at:type_name -> google.protobuf.Timestamp
+	13, // 12: agentregistry.v1.AccessToken.expires_at:type_name -> google.protobuf.Timestamp
+	13, // 13: agentregistry.v1.AccessToken.created_at:type_name -> google.protobuf.Timestamp
+	3,  // 14: agentregistry.v1.AccessAgreement.status:type_name -> agentregistry.v1.AgreementStatus
+	13, // 15: agentregistry.v1.AccessAgreement.requested_at:type_name -> google.protobuf.Timestamp
+	13, // 16: agentregistry.v1.AccessAgreement.resolved_at:type_name -> google.protobuf.Timestamp
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_agentregistry_v1_agent_proto_init() }
@@ -812,8 +1208,8 @@ func file_agentregistry_v1_agent_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agentregistry_v1_agent_proto_rawDesc), len(file_agentregistry_v1_agent_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   6,
+			NumEnums:      4,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

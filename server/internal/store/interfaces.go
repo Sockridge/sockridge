@@ -45,3 +45,13 @@ type PublisherStore interface {
 	GetPublisherByID(ctx context.Context, publisherID string) (*registryv1.PublisherAccount, error)
 	GetPublisherByHandle(ctx context.Context, handle string) (*registryv1.PublisherAccount, error)
 }
+
+// AgreementStore — backed by ScyllaDB
+type AgreementStore interface {
+	SaveAgreement(ctx context.Context, agreement *registryv1.AccessAgreement) error
+	GetAgreement(ctx context.Context, agreementID string) (*registryv1.AccessAgreement, error)
+	UpdateAgreement(ctx context.Context, agreement *registryv1.AccessAgreement) error
+	ListPendingForReceiver(ctx context.Context, receiverID string) ([]*registryv1.AccessAgreement, error)
+	ListActiveForPublisher(ctx context.Context, publisherID string) ([]*registryv1.AccessAgreement, error)
+	GetAgreementByKey(ctx context.Context, sharedKey string) (*registryv1.AccessAgreement, error)
+}

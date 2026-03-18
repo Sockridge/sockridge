@@ -46,7 +46,7 @@ func (s *Service) GetAgent(
 	}
 
 	if cached, err := s.cache.GetAgent(ctx, req.Msg.AgentId); err == nil {
-		return connect.NewResponse(&registryv1.DiscoveryServiceGetAgentResponse{Agent: cached}), nil
+		return connect.NewResponse(&registryv1.DiscoveryServiceGetAgentResponse{Agent: stripURL(cached)}), nil
 	}
 
 	agent, err := s.agents.Get(ctx, req.Msg.AgentId)
@@ -55,7 +55,7 @@ func (s *Service) GetAgent(
 	}
 
 	_ = s.cache.SetAgent(ctx, agent)
-	return connect.NewResponse(&registryv1.DiscoveryServiceGetAgentResponse{Agent: agent}), nil
+	return connect.NewResponse(&registryv1.DiscoveryServiceGetAgentResponse{Agent: stripURL(agent)}), nil
 }
 
 func (s *Service) ListAgents(
@@ -79,7 +79,7 @@ func (s *Service) ListAgents(
 			token = nextToken
 		}
 		if err := stream.Send(&registryv1.ListAgentsResponse{
-			Agent:         agent,
+			Agent:         stripURL(agent),
 			NextPageToken: token,
 		}); err != nil {
 			return err
@@ -136,7 +136,7 @@ func (s *Service) SemanticSearch(
 		}
 
 		if err := stream.Send(&registryv1.SemanticSearchResponse{
-			Agent: agent,
+			Agent: stripURL(agent),
 			Score: r.Score,
 		}); err != nil {
 			return err
@@ -177,6 +177,20 @@ func (s *Service) getAgentCached(ctx context.Context, agentID string) (*registry
 		return cached, nil
 	}
 	return s.agents.Get(ctx, agentID)
+}
+
+// stripURL removes the endpoint URL before returning to unauthenticated callers.
+// URL is only revealed via ResolveEndpoint with a valid shared key.
+func stripURL(agent *registryv1.AgentCard) *registryv1.AgentCard {
+	if agent == nil {
+		return nil
+	}
+	// make a shallow copy so we don't mutate the cached version
+	copy := *agent
+	copy.Url = ""
+	// also strip URLs from interfaces
+	copy.Interfaces = nil
+	return &copy
 }
 
 func (s *Service) matchesFilter(agent *registryv1.AgentCard, tags []string, capabilities []string) bool {

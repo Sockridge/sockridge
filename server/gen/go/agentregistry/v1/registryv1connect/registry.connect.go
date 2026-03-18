@@ -25,6 +25,8 @@ const (
 	RegistryServiceName = "agentregistry.v1.RegistryService"
 	// DiscoveryServiceName is the fully-qualified name of the DiscoveryService service.
 	DiscoveryServiceName = "agentregistry.v1.DiscoveryService"
+	// AccessAgreementServiceName is the fully-qualified name of the AccessAgreementService service.
+	AccessAgreementServiceName = "agentregistry.v1.AccessAgreementService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -67,6 +69,30 @@ const (
 	DiscoveryServiceSemanticSearchProcedure = "/agentregistry.v1.DiscoveryService/SemanticSearch"
 	// DiscoveryServiceWatchProcedure is the fully-qualified name of the DiscoveryService's Watch RPC.
 	DiscoveryServiceWatchProcedure = "/agentregistry.v1.DiscoveryService/Watch"
+	// AccessAgreementServiceRequestAccessProcedure is the fully-qualified name of the
+	// AccessAgreementService's RequestAccess RPC.
+	AccessAgreementServiceRequestAccessProcedure = "/agentregistry.v1.AccessAgreementService/RequestAccess"
+	// AccessAgreementServiceListPendingProcedure is the fully-qualified name of the
+	// AccessAgreementService's ListPending RPC.
+	AccessAgreementServiceListPendingProcedure = "/agentregistry.v1.AccessAgreementService/ListPending"
+	// AccessAgreementServiceApproveAccessProcedure is the fully-qualified name of the
+	// AccessAgreementService's ApproveAccess RPC.
+	AccessAgreementServiceApproveAccessProcedure = "/agentregistry.v1.AccessAgreementService/ApproveAccess"
+	// AccessAgreementServiceDenyAccessProcedure is the fully-qualified name of the
+	// AccessAgreementService's DenyAccess RPC.
+	AccessAgreementServiceDenyAccessProcedure = "/agentregistry.v1.AccessAgreementService/DenyAccess"
+	// AccessAgreementServiceRevokeAccessProcedure is the fully-qualified name of the
+	// AccessAgreementService's RevokeAccess RPC.
+	AccessAgreementServiceRevokeAccessProcedure = "/agentregistry.v1.AccessAgreementService/RevokeAccess"
+	// AccessAgreementServiceListAgreementsProcedure is the fully-qualified name of the
+	// AccessAgreementService's ListAgreements RPC.
+	AccessAgreementServiceListAgreementsProcedure = "/agentregistry.v1.AccessAgreementService/ListAgreements"
+	// AccessAgreementServiceResolveEndpointProcedure is the fully-qualified name of the
+	// AccessAgreementService's ResolveEndpoint RPC.
+	AccessAgreementServiceResolveEndpointProcedure = "/agentregistry.v1.AccessAgreementService/ResolveEndpoint"
+	// AccessAgreementServiceGetAgreementProcedure is the fully-qualified name of the
+	// AccessAgreementService's GetAgreement RPC.
+	AccessAgreementServiceGetAgreementProcedure = "/agentregistry.v1.AccessAgreementService/GetAgreement"
 )
 
 // RegistryServiceClient is a client for the agentregistry.v1.RegistryService service.
@@ -441,4 +467,257 @@ func (UnimplementedDiscoveryServiceHandler) SemanticSearch(context.Context, *con
 
 func (UnimplementedDiscoveryServiceHandler) Watch(context.Context, *connect.Request[v1.WatchRequest], *connect.ServerStream[v1.WatchResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.DiscoveryService.Watch is not implemented"))
+}
+
+// AccessAgreementServiceClient is a client for the agentregistry.v1.AccessAgreementService service.
+type AccessAgreementServiceClient interface {
+	RequestAccess(context.Context, *connect.Request[v1.RequestAccessRequest]) (*connect.Response[v1.RequestAccessResponse], error)
+	ListPending(context.Context, *connect.Request[v1.ListPendingRequest]) (*connect.ServerStreamForClient[v1.ListPendingResponse], error)
+	ApproveAccess(context.Context, *connect.Request[v1.ApproveAccessRequest]) (*connect.Response[v1.ApproveAccessResponse], error)
+	DenyAccess(context.Context, *connect.Request[v1.DenyAccessRequest]) (*connect.Response[v1.DenyAccessResponse], error)
+	RevokeAccess(context.Context, *connect.Request[v1.RevokeAccessRequest]) (*connect.Response[v1.RevokeAccessResponse], error)
+	ListAgreements(context.Context, *connect.Request[v1.ListAgreementsRequest]) (*connect.ServerStreamForClient[v1.ListAgreementsResponse], error)
+	ResolveEndpoint(context.Context, *connect.Request[v1.ResolveEndpointRequest]) (*connect.Response[v1.ResolveEndpointResponse], error)
+	GetAgreement(context.Context, *connect.Request[v1.GetAgreementRequest]) (*connect.Response[v1.GetAgreementResponse], error)
+}
+
+// NewAccessAgreementServiceClient constructs a client for the
+// agentregistry.v1.AccessAgreementService service. By default, it uses the Connect protocol with
+// the binary Protobuf Codec, asks for gzipped responses, and sends uncompressed requests. To use
+// the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewAccessAgreementServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AccessAgreementServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	accessAgreementServiceMethods := v1.File_agentregistry_v1_registry_proto.Services().ByName("AccessAgreementService").Methods()
+	return &accessAgreementServiceClient{
+		requestAccess: connect.NewClient[v1.RequestAccessRequest, v1.RequestAccessResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceRequestAccessProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("RequestAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		listPending: connect.NewClient[v1.ListPendingRequest, v1.ListPendingResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceListPendingProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("ListPending")),
+			connect.WithClientOptions(opts...),
+		),
+		approveAccess: connect.NewClient[v1.ApproveAccessRequest, v1.ApproveAccessResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceApproveAccessProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("ApproveAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		denyAccess: connect.NewClient[v1.DenyAccessRequest, v1.DenyAccessResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceDenyAccessProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("DenyAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeAccess: connect.NewClient[v1.RevokeAccessRequest, v1.RevokeAccessResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceRevokeAccessProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("RevokeAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		listAgreements: connect.NewClient[v1.ListAgreementsRequest, v1.ListAgreementsResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceListAgreementsProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("ListAgreements")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveEndpoint: connect.NewClient[v1.ResolveEndpointRequest, v1.ResolveEndpointResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceResolveEndpointProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("ResolveEndpoint")),
+			connect.WithClientOptions(opts...),
+		),
+		getAgreement: connect.NewClient[v1.GetAgreementRequest, v1.GetAgreementResponse](
+			httpClient,
+			baseURL+AccessAgreementServiceGetAgreementProcedure,
+			connect.WithSchema(accessAgreementServiceMethods.ByName("GetAgreement")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// accessAgreementServiceClient implements AccessAgreementServiceClient.
+type accessAgreementServiceClient struct {
+	requestAccess   *connect.Client[v1.RequestAccessRequest, v1.RequestAccessResponse]
+	listPending     *connect.Client[v1.ListPendingRequest, v1.ListPendingResponse]
+	approveAccess   *connect.Client[v1.ApproveAccessRequest, v1.ApproveAccessResponse]
+	denyAccess      *connect.Client[v1.DenyAccessRequest, v1.DenyAccessResponse]
+	revokeAccess    *connect.Client[v1.RevokeAccessRequest, v1.RevokeAccessResponse]
+	listAgreements  *connect.Client[v1.ListAgreementsRequest, v1.ListAgreementsResponse]
+	resolveEndpoint *connect.Client[v1.ResolveEndpointRequest, v1.ResolveEndpointResponse]
+	getAgreement    *connect.Client[v1.GetAgreementRequest, v1.GetAgreementResponse]
+}
+
+// RequestAccess calls agentregistry.v1.AccessAgreementService.RequestAccess.
+func (c *accessAgreementServiceClient) RequestAccess(ctx context.Context, req *connect.Request[v1.RequestAccessRequest]) (*connect.Response[v1.RequestAccessResponse], error) {
+	return c.requestAccess.CallUnary(ctx, req)
+}
+
+// ListPending calls agentregistry.v1.AccessAgreementService.ListPending.
+func (c *accessAgreementServiceClient) ListPending(ctx context.Context, req *connect.Request[v1.ListPendingRequest]) (*connect.ServerStreamForClient[v1.ListPendingResponse], error) {
+	return c.listPending.CallServerStream(ctx, req)
+}
+
+// ApproveAccess calls agentregistry.v1.AccessAgreementService.ApproveAccess.
+func (c *accessAgreementServiceClient) ApproveAccess(ctx context.Context, req *connect.Request[v1.ApproveAccessRequest]) (*connect.Response[v1.ApproveAccessResponse], error) {
+	return c.approveAccess.CallUnary(ctx, req)
+}
+
+// DenyAccess calls agentregistry.v1.AccessAgreementService.DenyAccess.
+func (c *accessAgreementServiceClient) DenyAccess(ctx context.Context, req *connect.Request[v1.DenyAccessRequest]) (*connect.Response[v1.DenyAccessResponse], error) {
+	return c.denyAccess.CallUnary(ctx, req)
+}
+
+// RevokeAccess calls agentregistry.v1.AccessAgreementService.RevokeAccess.
+func (c *accessAgreementServiceClient) RevokeAccess(ctx context.Context, req *connect.Request[v1.RevokeAccessRequest]) (*connect.Response[v1.RevokeAccessResponse], error) {
+	return c.revokeAccess.CallUnary(ctx, req)
+}
+
+// ListAgreements calls agentregistry.v1.AccessAgreementService.ListAgreements.
+func (c *accessAgreementServiceClient) ListAgreements(ctx context.Context, req *connect.Request[v1.ListAgreementsRequest]) (*connect.ServerStreamForClient[v1.ListAgreementsResponse], error) {
+	return c.listAgreements.CallServerStream(ctx, req)
+}
+
+// ResolveEndpoint calls agentregistry.v1.AccessAgreementService.ResolveEndpoint.
+func (c *accessAgreementServiceClient) ResolveEndpoint(ctx context.Context, req *connect.Request[v1.ResolveEndpointRequest]) (*connect.Response[v1.ResolveEndpointResponse], error) {
+	return c.resolveEndpoint.CallUnary(ctx, req)
+}
+
+// GetAgreement calls agentregistry.v1.AccessAgreementService.GetAgreement.
+func (c *accessAgreementServiceClient) GetAgreement(ctx context.Context, req *connect.Request[v1.GetAgreementRequest]) (*connect.Response[v1.GetAgreementResponse], error) {
+	return c.getAgreement.CallUnary(ctx, req)
+}
+
+// AccessAgreementServiceHandler is an implementation of the agentregistry.v1.AccessAgreementService
+// service.
+type AccessAgreementServiceHandler interface {
+	RequestAccess(context.Context, *connect.Request[v1.RequestAccessRequest]) (*connect.Response[v1.RequestAccessResponse], error)
+	ListPending(context.Context, *connect.Request[v1.ListPendingRequest], *connect.ServerStream[v1.ListPendingResponse]) error
+	ApproveAccess(context.Context, *connect.Request[v1.ApproveAccessRequest]) (*connect.Response[v1.ApproveAccessResponse], error)
+	DenyAccess(context.Context, *connect.Request[v1.DenyAccessRequest]) (*connect.Response[v1.DenyAccessResponse], error)
+	RevokeAccess(context.Context, *connect.Request[v1.RevokeAccessRequest]) (*connect.Response[v1.RevokeAccessResponse], error)
+	ListAgreements(context.Context, *connect.Request[v1.ListAgreementsRequest], *connect.ServerStream[v1.ListAgreementsResponse]) error
+	ResolveEndpoint(context.Context, *connect.Request[v1.ResolveEndpointRequest]) (*connect.Response[v1.ResolveEndpointResponse], error)
+	GetAgreement(context.Context, *connect.Request[v1.GetAgreementRequest]) (*connect.Response[v1.GetAgreementResponse], error)
+}
+
+// NewAccessAgreementServiceHandler builds an HTTP handler from the service implementation. It
+// returns the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewAccessAgreementServiceHandler(svc AccessAgreementServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	accessAgreementServiceMethods := v1.File_agentregistry_v1_registry_proto.Services().ByName("AccessAgreementService").Methods()
+	accessAgreementServiceRequestAccessHandler := connect.NewUnaryHandler(
+		AccessAgreementServiceRequestAccessProcedure,
+		svc.RequestAccess,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("RequestAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceListPendingHandler := connect.NewServerStreamHandler(
+		AccessAgreementServiceListPendingProcedure,
+		svc.ListPending,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("ListPending")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceApproveAccessHandler := connect.NewUnaryHandler(
+		AccessAgreementServiceApproveAccessProcedure,
+		svc.ApproveAccess,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("ApproveAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceDenyAccessHandler := connect.NewUnaryHandler(
+		AccessAgreementServiceDenyAccessProcedure,
+		svc.DenyAccess,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("DenyAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceRevokeAccessHandler := connect.NewUnaryHandler(
+		AccessAgreementServiceRevokeAccessProcedure,
+		svc.RevokeAccess,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("RevokeAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceListAgreementsHandler := connect.NewServerStreamHandler(
+		AccessAgreementServiceListAgreementsProcedure,
+		svc.ListAgreements,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("ListAgreements")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceResolveEndpointHandler := connect.NewUnaryHandler(
+		AccessAgreementServiceResolveEndpointProcedure,
+		svc.ResolveEndpoint,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("ResolveEndpoint")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accessAgreementServiceGetAgreementHandler := connect.NewUnaryHandler(
+		AccessAgreementServiceGetAgreementProcedure,
+		svc.GetAgreement,
+		connect.WithSchema(accessAgreementServiceMethods.ByName("GetAgreement")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/agentregistry.v1.AccessAgreementService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case AccessAgreementServiceRequestAccessProcedure:
+			accessAgreementServiceRequestAccessHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceListPendingProcedure:
+			accessAgreementServiceListPendingHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceApproveAccessProcedure:
+			accessAgreementServiceApproveAccessHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceDenyAccessProcedure:
+			accessAgreementServiceDenyAccessHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceRevokeAccessProcedure:
+			accessAgreementServiceRevokeAccessHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceListAgreementsProcedure:
+			accessAgreementServiceListAgreementsHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceResolveEndpointProcedure:
+			accessAgreementServiceResolveEndpointHandler.ServeHTTP(w, r)
+		case AccessAgreementServiceGetAgreementProcedure:
+			accessAgreementServiceGetAgreementHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedAccessAgreementServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedAccessAgreementServiceHandler struct{}
+
+func (UnimplementedAccessAgreementServiceHandler) RequestAccess(context.Context, *connect.Request[v1.RequestAccessRequest]) (*connect.Response[v1.RequestAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.RequestAccess is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) ListPending(context.Context, *connect.Request[v1.ListPendingRequest], *connect.ServerStream[v1.ListPendingResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.ListPending is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) ApproveAccess(context.Context, *connect.Request[v1.ApproveAccessRequest]) (*connect.Response[v1.ApproveAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.ApproveAccess is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) DenyAccess(context.Context, *connect.Request[v1.DenyAccessRequest]) (*connect.Response[v1.DenyAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.DenyAccess is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) RevokeAccess(context.Context, *connect.Request[v1.RevokeAccessRequest]) (*connect.Response[v1.RevokeAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.RevokeAccess is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) ListAgreements(context.Context, *connect.Request[v1.ListAgreementsRequest], *connect.ServerStream[v1.ListAgreementsResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.ListAgreements is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) ResolveEndpoint(context.Context, *connect.Request[v1.ResolveEndpointRequest]) (*connect.Response[v1.ResolveEndpointResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.ResolveEndpoint is not implemented"))
+}
+
+func (UnimplementedAccessAgreementServiceHandler) GetAgreement(context.Context, *connect.Request[v1.GetAgreementRequest]) (*connect.Response[v1.GetAgreementResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("agentregistry.v1.AccessAgreementService.GetAgreement is not implemented"))
 }

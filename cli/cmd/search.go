@@ -25,6 +25,7 @@ func NewSearchCmd() *cobra.Command {
 		newGetCmd(),
 		newSemanticCmd(),
 		newWatchCmd(),
+		newMyAgentCmd(),
 	)
 
 	return search
@@ -122,9 +123,9 @@ func newSemanticCmd() *cobra.Command {
 		Short: "Find agents by natural language description",
 		Long:  `Uses vector similarity to find agents matching a natural language query.`,
 		Args:  cobra.MinimumNArgs(1),
-		Example: `agentctl search semantic "analyze lab trends from FHIR"
-		agentctl search semantic "detect drug interactions" --top-k 5
-		agentctl search semantic "calendar management" --min-score 0.5`,
+		Example: `  agentctl search semantic "analyze lab trends from FHIR"
+  agentctl search semantic "detect drug interactions" --top-k 5
+  agentctl search semantic "calendar management" --min-score 0.5`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			query := strings.Join(args, " ")
 			c := newClient(serverURL)
@@ -213,6 +214,9 @@ func newWatchCmd() *cobra.Command {
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newClient(serverURL string) *client.Client {
+	if serverURL == "" {
+		serverURL = client.DefaultServerURL
+	}
 	creds, _ := keystore.LoadCredentials()
 	if creds != nil && creds.ServerURL != "" && serverURL == client.DefaultServerURL {
 		serverURL = creds.ServerURL
@@ -238,10 +242,46 @@ func printAgentDetail(a *registryv1.AgentCard) {
 	fmt.Printf("name        : %s\n", a.Name)
 	fmt.Printf("description : %s\n", a.Description)
 	fmt.Printf("version     : %s\n", a.Version)
+	fmt.Printf("url         : %s\n", a.Url)
 	fmt.Printf("publisher   : %s\n", a.PublisherId)
 	fmt.Printf("status      : %s\n", a.Status)
 	fmt.Printf("skills      :\n")
 	for _, s := range a.Skills {
 		fmt.Printf("  - %s (%s) [%s]\n", s.Name, s.Id, strings.Join(s.Tags, ", "))
 	}
+}
+
+// ── agentctl search mine ──────────────────────────────────────────────────────
+// Gets your own agent with full details including URL (requires auth)
+
+func newMyAgentCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mine <agent-id>",
+		Short: "Get your own agent with full details including URL",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			creds, err := keystore.LoadCredentials()
+			if err != nil {
+				return err
+			}
+			if creds.SessionToken == "" {
+				return fmt.Errorf("not logged in — run: agentctl auth login")
+			}
+
+			c := newClient("")
+			resp, err := c.Registry.GetAgent(
+				context.Background(),
+				connect.NewRequest(&registryv1.RegistryServiceGetAgentRequest{
+					AgentId: args[0],
+				}),
+			)
+			if err != nil {
+				return fmt.Errorf("getting agent: %w", err)
+			}
+
+			printAgentDetail(resp.Msg.Agent)
+			return nil
+		},
+	}
+	return cmd
 }

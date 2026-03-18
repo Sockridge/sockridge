@@ -92,7 +92,7 @@ func (s *ScyllaStore) CreateSchema(ctx context.Context, keyspace string) error {
 			return fmt.Errorf("executing schema stmt: %w\nstmt: %s", err, stmt)
 		}
 	}
-	return nil
+	return s.CreateAgreementSchema(ctx)
 }
 
 // ── AgentStore ────────────────────────────────────────────────────────────────
