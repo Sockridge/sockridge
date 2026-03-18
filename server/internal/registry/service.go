@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -258,8 +259,12 @@ func (s *Service) unpackSignedAgent(ctx context.Context, publisherID string, sig
 	}
 
 	var agent registryv1.AgentCard
+
+	// try proto binary first, fall back to JSON (used by Python/JS SDKs)
 	if err := proto.Unmarshal(signed.Payload, &agent); err != nil {
-		return nil, fmt.Errorf("unmarshaling agent payload: %w", err)
+		if jsonErr := protojson.Unmarshal(signed.Payload, &agent); jsonErr != nil {
+			return nil, fmt.Errorf("unmarshaling agent payload: proto: %v, json: %v", err, jsonErr)
+		}
 	}
 	return &agent, nil
 }
