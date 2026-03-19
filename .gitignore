@@ -1,0 +1,55 @@
+# ── Go ────────────────────────────────────────────────────────────────────────
+bin/
+*.exe
+*.test
+*.out
+vendor/
+go.sum
+
+# generated proto code — regenerate with buf generate
+gen/
+
+# ── Python SDK ────────────────────────────────────────────────────────────────
+sdk/python/__pycache__/
+sdk/python/*.egg-info/
+sdk/python/dist/
+sdk/python/build/
+sdk/python/.venv/
+sdk/python/socialagents/__pycache__/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# ── TypeScript SDK ────────────────────────────────────────────────────────────
+sdk/typescript/node_modules/
+sdk/typescript/dist/
+sdk/typescript/*.js
+sdk/typescript/*.d.ts
+sdk/typescript/*.js.map
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+
+# ── Credentials — NEVER commit these ─────────────────────────────────────────
+.agentctl/
+*.key
+credentials.json
+**/ed25519.key
+**/credentials.json
+
+# ── Test files ────────────────────────────────────────────────────────────────
+test_agents/
+/tmp/
+*.log
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
