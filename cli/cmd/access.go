@@ -8,8 +8,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/spf13/cobra"
 
-	"github.com/utsav-develops/SocialAgents/cli/internal/keystore"
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
+	"github.com/Sockridge/sockridge/cli/internal/keystore"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 func NewAccessCmd() *cobra.Command {
@@ -32,7 +32,7 @@ func NewAccessCmd() *cobra.Command {
 	return access
 }
 
-// ── agentctl access request ───────────────────────────────────────────────────
+// ── sockridge access request ───────────────────────────────────────────────────
 
 func newRequestCmd() *cobra.Command {
 	var (
@@ -49,7 +49,7 @@ func newRequestCmd() *cobra.Command {
 				return err
 			}
 			if creds.SessionToken == "" {
-				return fmt.Errorf("not logged in — run: agentctl auth login")
+				return fmt.Errorf("not logged in — run: sockridge auth login")
 			}
 
 			c := newClient("")
@@ -80,7 +80,7 @@ func newRequestCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access pending ───────────────────────────────────────────────────
+// ── sockridge access pending ───────────────────────────────────────────────────
 
 func newListPendingCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -124,7 +124,7 @@ func newListPendingCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access approve ───────────────────────────────────────────────────
+// ── sockridge access approve ───────────────────────────────────────────────────
 
 func newApproveCmd() *cobra.Command {
 	var agreementID string
@@ -164,7 +164,7 @@ func newApproveCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access deny ──────────────────────────────────────────────────────
+// ── sockridge access deny ──────────────────────────────────────────────────────
 
 func newDenyCmd() *cobra.Command {
 	var agreementID string
@@ -200,7 +200,7 @@ func newDenyCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access revoke ────────────────────────────────────────────────────
+// ── sockridge access revoke ────────────────────────────────────────────────────
 
 func newRevokeCmd() *cobra.Command {
 	var agreementID string
@@ -236,7 +236,7 @@ func newRevokeCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access list ──────────────────────────────────────────────────────
+// ── sockridge access list ──────────────────────────────────────────────────────
 
 func newListAgreementsCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -281,7 +281,7 @@ func newListAgreementsCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access resolve ───────────────────────────────────────────────────
+// ── sockridge access resolve ───────────────────────────────────────────────────
 
 func newResolveCmd() *cobra.Command {
 	var (
@@ -322,7 +322,7 @@ func newResolveCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl access get ───────────────────────────────────────────────────────
+// ── sockridge access get ───────────────────────────────────────────────────────
 
 func newGetAgreementCmd() *cobra.Command {
 	var agreementID string

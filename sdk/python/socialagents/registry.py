@@ -21,7 +21,7 @@ class Registry:
         from socialagents import Registry, AgentCard, Skill, Capabilities
 
         registry = Registry("http://localhost:9000")
-        registry.login(credentials_path="~/.agentctl/credentials.json")
+        registry.login(credentials_path="~/.sockridge/credentials.json")
 
         card = AgentCard(
             name="My Agent",

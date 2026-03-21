@@ -12,13 +12,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
-	"github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1/registryv1connect"
-	"github.com/utsav-develops/SocialAgents/server/internal/auth"
-	"github.com/utsav-develops/SocialAgents/server/internal/embedder"
-	"github.com/utsav-develops/SocialAgents/server/internal/gatekeeper"
-	"github.com/utsav-develops/SocialAgents/server/internal/store"
-	"github.com/utsav-develops/SocialAgents/server/middleware"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
+	"github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1/registryv1connect"
+	"github.com/Sockridge/sockridge/server/internal/auth"
+	"github.com/Sockridge/sockridge/server/internal/embedder"
+	"github.com/Sockridge/sockridge/server/internal/gatekeeper"
+	"github.com/Sockridge/sockridge/server/internal/store"
+	"github.com/Sockridge/sockridge/server/middleware"
 )
 
 type Service struct {

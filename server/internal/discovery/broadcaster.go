@@ -3,7 +3,7 @@ package discovery
 import (
 	"sync"
 
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 // Broadcaster fans out WatchResponse events to all active Watch subscribers.

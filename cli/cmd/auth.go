@@ -8,9 +8,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/spf13/cobra"
 
-registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
-"github.com/utsav-develops/SocialAgents/cli/internal/client"
-"github.com/utsav-develops/SocialAgents/cli/internal/keystore"
+	"github.com/Sockridge/sockridge/cli/internal/client"
+	"github.com/Sockridge/sockridge/cli/internal/keystore"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 func NewAuthCmd() *cobra.Command {
@@ -29,13 +29,13 @@ func NewAuthCmd() *cobra.Command {
 	return auth
 }
 
-// ── agentctl auth keygen ──────────────────────────────────────────────────────
+// ── sockridge auth keygen ──────────────────────────────────────────────────────
 
 func newKeygenCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "keygen",
 		Short: "Generate a new Ed25519 keypair",
-		Long:  "Generates an Ed25519 keypair and saves the private key to ~/.agentctl/ed25519.key (chmod 600).",
+		Long:  "Generates an Ed25519 keypair and saves the private key to ~/.sockridge/ed25519.key (chmod 600).",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			kp, err := keystore.Generate()
 			if err != nil {
@@ -44,13 +44,13 @@ func newKeygenCmd() *cobra.Command {
 
 			fmt.Println("keypair generated")
 			fmt.Printf("public key : %s\n", kp.PublicKey)
-			fmt.Printf("private key: ~/.agentctl/ed25519.key (keep this secret)\n")
+			fmt.Printf("private key: ~/.sockridge/ed25519.key (keep this secret)\n")
 			return nil
 		},
 	}
 }
 
-// ── agentctl auth register ────────────────────────────────────────────────────
+// ── sockridge auth register ────────────────────────────────────────────────────
 
 func newRegisterCmd() *cobra.Command {
 	var (
@@ -96,7 +96,7 @@ func newRegisterCmd() *cobra.Command {
 
 			fmt.Printf("registered as @%s\n", handle)
 			fmt.Printf("publisher id: %s\n", resp.Msg.PublisherId)
-			fmt.Printf("credentials saved to ~/.agentctl/credentials.json\n")
+			fmt.Printf("credentials saved to ~/.sockridge/credentials.json\n")
 			return nil
 		},
 	}
@@ -107,9 +107,9 @@ func newRegisterCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl auth login ───────────────────────────────────────────────────────
+// ── sockridge auth login ───────────────────────────────────────────────────────
 // Performs the full challenge-response flow and prints the session token.
-// The token is stored in ~/.agentctl/credentials.json for use by other commands.
+// The token is stored in ~/.sockridge/credentials.json for use by other commands.
 
 func newLoginCmd() *cobra.Command {
 	var serverURL string
@@ -179,7 +179,7 @@ func newLoginCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl auth whoami ──────────────────────────────────────────────────────
+// ── sockridge auth whoami ──────────────────────────────────────────────────────
 
 func newWhoamiCmd() *cobra.Command {
 	return &cobra.Command{
@@ -196,7 +196,7 @@ func newWhoamiCmd() *cobra.Command {
 			fmt.Printf("server      : %s\n", creds.ServerURL)
 
 			if creds.SessionToken == "" {
-				fmt.Fprintln(os.Stderr, "not logged in — run: agentctl auth login")
+				fmt.Fprintln(os.Stderr, "not logged in — run: sockridge auth login")
 			}
 
 			return nil

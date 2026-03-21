@@ -10,9 +10,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
-"github.com/utsav-develops/SocialAgents/cli/internal/client"
-"github.com/utsav-develops/SocialAgents/cli/internal/keystore"
+	"github.com/Sockridge/sockridge/cli/internal/client"
+	"github.com/Sockridge/sockridge/cli/internal/keystore"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 func NewPublishCmd() *cobra.Command {
@@ -49,7 +49,7 @@ Example agent file (agent.json):
 				return err
 			}
 			if creds.SessionToken == "" {
-				return fmt.Errorf("not logged in — run: agentctl auth login")
+				return fmt.Errorf("not logged in — run: sockridge auth login")
 			}
 
 			kp, err := keystore.Load()

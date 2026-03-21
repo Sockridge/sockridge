@@ -14,7 +14,7 @@ build:
 
 # Build CLI binary
 cli:
-	cd cli && go build -o ../bin/agentctl ./cmd
+	cd cli && go build -o ../bin/sockridge ./cmd
 
 # Start full local stack
 up:

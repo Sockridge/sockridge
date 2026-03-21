@@ -18,4 +18,4 @@ dependencies = [
 dev = ["pytest", "pytest-asyncio"]
 
 [project.urls]
-Homepage = "https://github.com/utsav-develops/SocialAgents"
+Homepage = "https://github.com/Sockridge/sockridge"

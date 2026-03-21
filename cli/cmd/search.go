@@ -9,9 +9,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/spf13/cobra"
 
-	"github.com/utsav-develops/SocialAgents/cli/internal/client"
-	"github.com/utsav-develops/SocialAgents/cli/internal/keystore"
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
+	"github.com/Sockridge/sockridge/cli/internal/client"
+	"github.com/Sockridge/sockridge/cli/internal/keystore"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 func NewSearchCmd() *cobra.Command {
@@ -31,7 +31,7 @@ func NewSearchCmd() *cobra.Command {
 	return search
 }
 
-// ── agentctl search list ──────────────────────────────────────────────────────
+// ── sockridge search list ──────────────────────────────────────────────────────
 
 func newListCmd() *cobra.Command {
 	var (
@@ -78,7 +78,7 @@ func newListCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl search get ───────────────────────────────────────────────────────
+// ── sockridge search get ───────────────────────────────────────────────────────
 
 func newGetCmd() *cobra.Command {
 	var serverURL string
@@ -109,7 +109,7 @@ func newGetCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl search semantic ──────────────────────────────────────────────────
+// ── sockridge search semantic ──────────────────────────────────────────────────
 
 func newSemanticCmd() *cobra.Command {
 	var (
@@ -123,9 +123,9 @@ func newSemanticCmd() *cobra.Command {
 		Short: "Find agents by natural language description",
 		Long:  `Uses vector similarity to find agents matching a natural language query.`,
 		Args:  cobra.MinimumNArgs(1),
-		Example: `  agentctl search semantic "analyze lab trends from FHIR"
-  agentctl search semantic "detect drug interactions" --top-k 5
-  agentctl search semantic "calendar management" --min-score 0.5`,
+		Example: `  sockridge search semantic "analyze lab trends from FHIR"
+  sockridge search semantic "detect drug interactions" --top-k 5
+  sockridge search semantic "calendar management" --min-score 0.5`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			query := strings.Join(args, " ")
 			c := newClient(serverURL)
@@ -164,7 +164,7 @@ func newSemanticCmd() *cobra.Command {
 	return cmd
 }
 
-// ── agentctl search watch ─────────────────────────────────────────────────────
+// ── sockridge search watch ─────────────────────────────────────────────────────
 
 func newWatchCmd() *cobra.Command {
 	var (
@@ -251,7 +251,7 @@ func printAgentDetail(a *registryv1.AgentCard) {
 	}
 }
 
-// ── agentctl search mine ──────────────────────────────────────────────────────
+// ── sockridge search mine ──────────────────────────────────────────────────────
 // Gets your own agent with full details including URL (requires auth)
 
 func newMyAgentCmd() *cobra.Command {
@@ -265,7 +265,7 @@ func newMyAgentCmd() *cobra.Command {
 				return err
 			}
 			if creds.SessionToken == "" {
-				return fmt.Errorf("not logged in — run: agentctl auth login")
+				return fmt.Errorf("not logged in — run: sockridge auth login")
 			}
 
 			c := newClient("")

@@ -10,20 +10,20 @@ import (
 	"path/filepath"
 
 	"connectrpc.com/connect"
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 // Login performs Ed25519 challenge-response auth.
-// credentialsPath defaults to ~/.agentctl/credentials.json
-// keyPath defaults to ~/.agentctl/ed25519.key
+// credentialsPath defaults to ~/.sockridge/credentials.json
+// keyPath defaults to ~/.sockridge/ed25519.key
 func (r *Registry) Login(credentialsPath, keyPath string) error {
 	if credentialsPath == "" {
 		home, _ := os.UserHomeDir()
-		credentialsPath = filepath.Join(home, ".agentctl", "credentials.json")
+		credentialsPath = filepath.Join(home, ".sockridge", "credentials.json")
 	}
 	if keyPath == "" {
 		home, _ := os.UserHomeDir()
-		keyPath = filepath.Join(home, ".agentctl", "ed25519.key")
+		keyPath = filepath.Join(home, ".sockridge", "ed25519.key")
 	}
 
 	priv, err := loadPrivateKey(keyPath)

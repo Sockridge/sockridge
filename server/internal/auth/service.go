@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/utsav-develops/SocialAgents/server/internal/config"
-	"github.com/utsav-develops/SocialAgents/server/internal/store"
+	"github.com/Sockridge/sockridge/server/internal/config"
+	"github.com/Sockridge/sockridge/server/internal/store"
 )
 
 // Service orchestrates challenge-response auth using Ed25519 + JWT.

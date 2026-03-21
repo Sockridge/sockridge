@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 )
 
 // AgentStore — backed by ScyllaDB

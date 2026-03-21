@@ -7,7 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/utsav-develops/SocialAgents/server/internal/auth"
+	"github.com/Sockridge/sockridge/server/internal/auth"
 )
 
 type contextKey string

@@ -11,13 +11,15 @@ export interface Credentials {
 }
 
 export function loadCredentials(credentialsPath?: string): Credentials {
-  const p = credentialsPath ?? path.join(os.homedir(), ".agentctl", "credentials.json");
+  const p =
+    credentialsPath ??
+    path.join(os.homedir(), ".sockridge", "credentials.json");
   const data = fs.readFileSync(p, "utf-8");
   return JSON.parse(data) as Credentials;
 }
 
 export function loadPrivateKey(keyPath?: string): Buffer {
-  const p = keyPath ?? path.join(os.homedir(), ".agentctl", "ed25519.key");
+  const p = keyPath ?? path.join(os.homedir(), ".sockridge", "ed25519.key");
   const b64 = fs.readFileSync(p, "utf-8").trim();
   return Buffer.from(b64, "base64");
 }
@@ -38,7 +40,7 @@ export function signPayload(privateKeyBytes: Buffer, payload: Buffer): Buffer {
 export function signWithSeed(seed: Buffer, message: Buffer): Buffer {
   const { privateKey } = crypto.generateKeyPairSync("ed25519", {
     privateKeyEncoding: { format: "der", type: "pkcs8" },
-    publicKeyEncoding:  { format: "der", type: "spki" },
+    publicKeyEncoding: { format: "der", type: "spki" },
   });
   // use the seed to derive keypair
   const keyObj = crypto.createPrivateKey({

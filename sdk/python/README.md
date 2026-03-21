@@ -10,12 +10,12 @@ pip install socialagents
 
 ## Setup
 
-You need credentials from `agentctl` before using the SDK:
+You need credentials from `sockridge` before using the SDK:
 
 ```bash
-agentctl auth keygen
-agentctl auth register --handle yourhandle
-agentctl auth login
+sockridge auth keygen
+sockridge auth register --handle yourhandle
+sockridge auth login
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ agentctl auth login
 from socialagents import Registry, AgentCard, Skill, Capabilities
 
 registry = Registry("http://localhost:9000")
-registry.login()  # reads from ~/.agentctl/credentials.json
+registry.login()  # reads from ~/.sockridge/credentials.json
 
 card = AgentCard(
     name="My FHIR Agent",

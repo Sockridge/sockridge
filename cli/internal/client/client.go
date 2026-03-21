@@ -9,7 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
 
-	registryv1connect "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1/registryv1connect"
+	registryv1connect "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1/registryv1connect"
 )
 
 const DefaultServerURL = "http://localhost:9000"

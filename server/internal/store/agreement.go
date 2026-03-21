@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 	"github.com/gocql/gocql"
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

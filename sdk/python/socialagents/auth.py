@@ -52,8 +52,8 @@ class KeyPair:
 
 
 class Credentials:
-    DEFAULT_PATH = Path.home() / ".agentctl" / "credentials.json"
-    DEFAULT_KEY  = Path.home() / ".agentctl" / "ed25519.key"
+    DEFAULT_PATH = Path.home() / ".sockridge" / "credentials.json"
+    DEFAULT_KEY  = Path.home() / ".sockridge" / "ed25519.key"
 
     def __init__(
         self,

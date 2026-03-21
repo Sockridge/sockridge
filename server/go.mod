@@ -1,4 +1,4 @@
-module github.com/utsav-develops/SocialAgents/server
+module github.com/Sockridge/sockridge/server
 
 go 1.26.1
 

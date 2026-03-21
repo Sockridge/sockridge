@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
+	"github.com/Sockridge/sockridge/server/internal/config"
 	"github.com/redis/go-redis/v9"
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
-	"github.com/utsav-develops/SocialAgents/server/internal/config"
 	"google.golang.org/protobuf/proto"
 )
 

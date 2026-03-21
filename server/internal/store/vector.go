@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Sockridge/sockridge/server/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pgvector/pgvector-go"
-	"github.com/utsav-develops/SocialAgents/server/internal/config"
 )
 
 type VectorStoreImpl struct {

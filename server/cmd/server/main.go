@@ -11,16 +11,16 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1/registryv1connect"
-	"github.com/utsav-develops/SocialAgents/server/internal/access"
-	"github.com/utsav-develops/SocialAgents/server/internal/auth"
-	"github.com/utsav-develops/SocialAgents/server/internal/config"
-	"github.com/utsav-develops/SocialAgents/server/internal/discovery"
-	"github.com/utsav-develops/SocialAgents/server/internal/embedder"
-	"github.com/utsav-develops/SocialAgents/server/internal/gatekeeper"
-	"github.com/utsav-develops/SocialAgents/server/internal/registry"
-	"github.com/utsav-develops/SocialAgents/server/internal/store"
-	"github.com/utsav-develops/SocialAgents/server/middleware"
+	"github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1/registryv1connect"
+	"github.com/Sockridge/sockridge/server/internal/access"
+	"github.com/Sockridge/sockridge/server/internal/auth"
+	"github.com/Sockridge/sockridge/server/internal/config"
+	"github.com/Sockridge/sockridge/server/internal/discovery"
+	"github.com/Sockridge/sockridge/server/internal/embedder"
+	"github.com/Sockridge/sockridge/server/internal/gatekeeper"
+	"github.com/Sockridge/sockridge/server/internal/registry"
+	"github.com/Sockridge/sockridge/server/internal/store"
+	"github.com/Sockridge/sockridge/server/middleware"
 )
 
 func main() {

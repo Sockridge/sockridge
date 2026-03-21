@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/utsav-develops/SocialAgents/sdk/go/socialagents"
+	"github.com/Sockridge/sockridge/sdk/go/socialagents"
 )
 
 func main() {

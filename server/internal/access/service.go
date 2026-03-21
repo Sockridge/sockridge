@@ -11,9 +11,9 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
-	"github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1/registryv1connect"
-	"github.com/utsav-develops/SocialAgents/server/internal/store"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
+	"github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1/registryv1connect"
+	"github.com/Sockridge/sockridge/server/internal/store"
 )
 
 type Service struct {

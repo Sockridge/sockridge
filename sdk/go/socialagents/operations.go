@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"connectrpc.com/connect"
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -29,7 +29,7 @@ func (r *Registry) Publish(ctx context.Context, card *AgentCard) (*AgentCard, er
 	}
 
 	home, _ := os.UserHomeDir()
-	keyPath := filepath.Join(home, ".agentctl", "ed25519.key")
+	keyPath := filepath.Join(home, ".sockridge", "ed25519.key")
 	privKey, err := loadPrivateKey(keyPath)
 	if err != nil {
 		return nil, fmt.Errorf("loading private key: %w", err)

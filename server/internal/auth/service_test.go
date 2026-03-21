@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	registryv1 "github.com/utsav-develops/SocialAgents/server/gen/go/agentregistry/v1"
-	"github.com/utsav-develops/SocialAgents/server/internal/auth"
-	"github.com/utsav-develops/SocialAgents/server/internal/config"
+	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
+	"github.com/Sockridge/sockridge/server/internal/auth"
+	"github.com/Sockridge/sockridge/server/internal/config"
 )
 
 type mockCache struct {

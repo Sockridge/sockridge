@@ -5,7 +5,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # install torch CPU-only (much smaller than default ~700MB vs ~2.5GB)
-RUN pip install --no-cache-dir torch==2.5.1+cpu \
+# RUN pip install --no-cache-dir torch==2.5.1+cpu \
+#     --index-url https://download.pytorch.org/whl/cpu
+
+RUN pip install --no-cache-dir torch==2.6.0+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
 RUN pip install --no-cache-dir \

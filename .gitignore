@@ -33,7 +33,7 @@ sdk/typescript/*.js.map
 .env.production
 
 # ── Credentials — NEVER commit these ─────────────────────────────────────────
-.agentctl/
+.sockridge/
 *.key
 credentials.json
 **/ed25519.key

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultDirName  = ".agentctl"
+	defaultDirName  = ".sockridge"
 	keyFile         = "ed25519.key"
 	credentialsFile = "credentials.json"
 )
@@ -19,7 +19,7 @@ const (
 // configDir is the active config directory — overridden by --config flag
 var configDir = ""
 
-// SetConfigDir overrides the default ~/.agentctl directory.
+// SetConfigDir overrides the default ~/.sockridge directory.
 // Called from root command when --config flag is set.
 func SetConfigDir(dir string) {
 	configDir = dir
@@ -70,7 +70,7 @@ func Load() (*KeyPair, error) {
 	data, err := os.ReadFile(keyPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("no keypair found — run: agentctl auth keygen")
+			return nil, fmt.Errorf("no keypair found — run: sockridge auth keygen")
 		}
 		return nil, fmt.Errorf("reading private key: %w", err)
 	}
@@ -121,7 +121,7 @@ func LoadCredentials() (*Credentials, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("not registered — run: agentctl auth register")
+			return nil, fmt.Errorf("not registered — run: sockridge auth register")
 		}
 		return nil, fmt.Errorf("reading credentials: %w", err)
 	}

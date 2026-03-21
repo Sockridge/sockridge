@@ -1,10 +1,10 @@
-module github.com/utsav-develops/SocialAgents/sdk/go
+module github.com/Sockridge/sockridge/sdk/go
 
 go 1.26.1
 
 require (
 	connectrpc.com/connect v1.19.1
-	github.com/utsav-develops/SocialAgents/server v0.0.0
+	github.com/Sockridge/sockridge/server v0.0.0
 	golang.org/x/net v0.52.0
 )
 
@@ -13,4 +13,4 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
-replace github.com/utsav-develops/SocialAgents/server => ../../server
+replace github.com/Sockridge/sockridge/server => ../../server
