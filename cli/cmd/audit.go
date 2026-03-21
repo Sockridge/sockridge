@@ -30,7 +30,13 @@ func newAuditListCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			creds, err := keystore.LoadCredentials()
 			if err != nil {
-				return err
+				return fmt.Errorf("not logged in — run: sockridge auth login")
+			}
+			if creds == nil || creds.PublisherID == "" {
+				return fmt.Errorf("not logged in — run: sockridge auth login")
+			}
+			if creds.SessionToken == "" {
+				return fmt.Errorf("session expired — run: sockridge auth login")
 			}
 
 			c := newClient("")
