@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            goos: linux
+            goarch: amd64
+          - os: linux
+            arch: arm64
+            goos: linux
+            goarch: arm64
+          - os: macos
+            arch: amd64
+            goos: darwin
+            goarch: amd64
+          - os: macos
+            arch: arm64
+            goos: darwin
+            goarch: arm64
+          - os: windows
+            arch: amd64
+            goos: windows
+            goarch: amd64
+            ext: .exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Install buf
+        run: |
+          curl -sSL https://github.com/bufbuild/buf/releases/download/v1.50.0/buf-Linux-x86_64 \
+            -o /usr/local/bin/buf && chmod +x /usr/local/bin/buf
+
+      - name: Install protoc plugins
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+
+      - name: Generate proto
+        run: buf generate
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o sockridge-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} \
+            ./cli
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sockridge-${{ matrix.os }}-${{ matrix.arch }}
+          path: sockridge-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+
+  release:
+    name: Create release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            ```sh
+            curl -fsSL https://sockridge.com/install.sh | sh
+            ```
+
+            ## Manual download
+
+            | Platform | Download |
+            |---|---|
+            | macOS (Apple Silicon) | `sockridge-macos-arm64` |
+            | macOS (Intel) | `sockridge-macos-amd64` |
+            | Linux (x86_64) | `sockridge-linux-amd64` |
+            | Linux (ARM64) | `sockridge-linux-arm64` |
+            | Windows | `sockridge-windows-amd64.exe` |
