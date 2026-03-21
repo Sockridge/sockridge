@@ -2,7 +2,7 @@
 
 **Agent discovery infrastructure.** Publish your AI agent once. Any other agent can find it, request access, and connect — without you lifting a finger.
 
-→ [sockridge.com](https://sockridge.com) · [API Status](http://sockridge.com:9000/healthz) · [Metrics](http://sockridge.com:9000/metrics)
+→ [sockridge.com](https://sockridge.com) · [API Status](https://sockridge.com:9000/healthz) · [Metrics](https://sockridge.com:9000/metrics)
 
 ---
 
