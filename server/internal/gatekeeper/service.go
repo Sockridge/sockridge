@@ -10,8 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// Service runs the full validation pipeline on a published AgentCard.
-// Pipeline: validate → ping → score → update agent status
 type Service struct {
 	anthropicKey string
 	groqKey      string
@@ -21,14 +19,12 @@ func New(anthropicKey, groqKey string) *Service {
 	return &Service{anthropicKey: anthropicKey, groqKey: groqKey}
 }
 
-// Evaluate runs the full gatekeeper pipeline and returns the result.
-// This is called asynchronously after PublishAgent so it doesn't block the publisher.
 func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*registryv1.GatekeeperResult, error) {
 	result := &registryv1.GatekeeperResult{
 		EvaluatedAt: timestamppb.New(time.Now()),
 	}
 
-	// step 1: basic validation
+	// step 1: basic field validation
 	if err := validate(agent); err != nil {
 		result.Approved = false
 		result.Reason = fmt.Sprintf("validation failed: %s", err.Error())
@@ -36,11 +32,18 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 		return result, nil
 	}
 
-	// step 2: ping the agent URL
+	// step 2: ping + A2A compliance check
 	if agent.Url != "" {
-		pingResult := Ping(ctx, agent.Url)
+		skillIDs := make([]string, len(agent.Skills))
+		for i, s := range agent.Skills {
+			skillIDs[i] = s.Id
+		}
+
+		pingResult := Ping(ctx, agent.Url, agent.Name, skillIDs)
 		result.Reachable = pingResult.Reachable
 		result.PingLatencyMs = pingResult.LatencyMs
+		result.A2ACompliant = pingResult.A2ACompliant
+		result.A2AMatchesCard = pingResult.A2AMatchesCard
 
 		if !pingResult.Reachable {
 			result.Approved = false
@@ -48,10 +51,22 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 			result.ConfidenceScore = 0.1
 			return result, nil
 		}
+
+		// A2A compliance adds to confidence — non-compliant agents get penalized
+		if !pingResult.A2ACompliant {
+			fmt.Printf("[INFO] agent %s is reachable but not A2A compliant: %s\n", agent.Id, pingResult.A2AError)
+			// don't reject outright — let AI scorer decide with lower base score
+			result.Reason = fmt.Sprintf("reachable but not A2A compliant: %s", pingResult.A2AError)
+		} else if !pingResult.A2AMatchesCard {
+			fmt.Printf("[INFO] agent %s A2A card mismatch: %s\n", agent.Id, pingResult.A2AError)
+			result.Reason = fmt.Sprintf("A2A card mismatch: %s", pingResult.A2AError)
+		} else {
+			fmt.Printf("[INFO] agent %s passed A2A compliance check\n", agent.Id)
+		}
 	}
 
 	// step 3: AI scoring
-	if s.anthropicKey != "" {
+	if s.anthropicKey != "" || s.groqKey != "" {
 		cardJSON, err := agentCardToJSON(agent)
 		if err != nil {
 			return nil, fmt.Errorf("serializing card for scoring: %w", err)
@@ -59,7 +74,6 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 
 		scoreResult, err := Score(ctx, cardJSON, s.anthropicKey, s.groqKey)
 		if err != nil {
-			// scoring failed — approve with low confidence rather than blocking
 			result.Approved = true
 			result.ConfidenceScore = 0.3
 			result.Reason = "scoring unavailable — approved with low confidence"
@@ -68,11 +82,10 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 
 		result.ConfidenceScore = scoreResult.ConfidenceScore
 		result.Reason = scoreResult.Reason
+
 		// approve if score >= 0.4 regardless of model boolean
-		// the model often rejects valid agents for minor issues like localhost URLs
 		result.Approved = scoreResult.Approved || scoreResult.ConfidenceScore >= 0.4
 	} else {
-		// no API key configured — auto-approve if ping passed
 		result.Approved = true
 		result.ConfidenceScore = 0.5
 		result.Reason = "auto-approved: AI scoring not configured"
@@ -81,7 +94,6 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 	return result, nil
 }
 
-// validate checks required fields are present and well-formed.
 func validate(agent *registryv1.AgentCard) error {
 	if agent.Name == "" {
 		return fmt.Errorf("name is required")
@@ -109,7 +121,6 @@ func validate(agent *registryv1.AgentCard) error {
 	return nil
 }
 
-// agentCardToJSON converts an AgentCard to a readable JSON string for the scorer.
 func agentCardToJSON(agent *registryv1.AgentCard) (string, error) {
 	m := map[string]interface{}{
 		"name":        agent.Name,

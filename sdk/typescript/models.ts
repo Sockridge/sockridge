@@ -11,11 +11,38 @@ export type AgreementStatus =
   | "AGREEMENT_STATUS_DENIED"
   | "AGREEMENT_STATUS_REVOKED";
 
+export type AuthScheme =
+  | "AUTH_SCHEME_NONE"
+  | "AUTH_SCHEME_API_KEY"
+  | "AUTH_SCHEME_OAUTH2"
+  | "AUTH_SCHEME_OPENID";
+
+export interface Provider {
+  name: string;
+  url?: string;
+  contact?: string;
+}
+
+export interface Authentication {
+  scheme: AuthScheme;
+  description?: string;
+  tokenUrl?: string;
+  scopes?: string;
+}
+
+export interface SkillExample {
+  input?: string;
+  output?: string;
+}
+
 export interface Skill {
   id: string;
   name: string;
   description: string;
   tags?: string[];
+  inputModes?: string[];
+  outputModes?: string[];
+  examples?: SkillExample[];
 }
 
 export interface Capabilities {
@@ -31,17 +58,32 @@ export interface GatekeeperResult {
   reason: string;
   reachable: boolean;
   pingLatencyMs: number;
+  a2aCompliant?: boolean;
+  a2aMatchesCard?: boolean;
 }
 
 export interface AgentCard {
-  id?: string;
+  // required
   name: string;
   description: string;
   url: string;
+
+  // optional base
+  id?: string;
   version?: string;
   protocolVersion?: string;
   skills?: Skill[];
   capabilities?: Capabilities;
+
+  // A2A spec fields
+  provider?: Provider;
+  authentication?: Authentication;
+  iconUrl?: string;
+  documentationUrl?: string;
+  protocolVersions?: string[];
+  extensions?: string[];
+
+  // set by registry
   publisherId?: string;
   status?: AgentStatus;
   gatekeeperResult?: GatekeeperResult;

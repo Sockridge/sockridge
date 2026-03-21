@@ -59,12 +59,14 @@ message Interface {
 // GatekeeperResult is the output of the automated validation pipeline.
 // Stored alongside the AgentCard and visible to consumers.
 message GatekeeperResult {
-  bool   approved        = 1;
+  bool   approved         = 1;
   float  confidence_score = 2; // 0.0 - 1.0
-  string reason          = 3; // human-readable explanation
-  bool   reachable       = 4; // did the ping succeed?
-  int32  ping_latency_ms = 5; // response time in ms
-  google.protobuf.Timestamp evaluated_at = 6;
+  string reason           = 3; // human-readable explanation
+  bool   reachable        = 4; // did the ping succeed?
+  int32  ping_latency_ms  = 5; // response time in ms
+  bool   a2a_compliant    = 6; // responded to /.well-known/agent.json
+  bool   a2a_matches_card = 7; // card fields match submission
+  google.protobuf.Timestamp evaluated_at = 8;
 }
 
 message AgentCard {
