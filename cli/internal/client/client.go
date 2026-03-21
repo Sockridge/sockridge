@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
@@ -21,24 +22,38 @@ type Client struct {
 }
 
 func New(serverURL string, token string) *Client {
+	httpClient := newHTTPClient(serverURL)
+
 	opts := []connect.ClientOption{}
 	if token != "" {
 		opts = append(opts, connect.WithInterceptors(bearerInterceptor(token)))
-	}
-
-	httpClient := &http.Client{
-		Transport: &http2.Transport{
-			AllowHTTP: true,
-			DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
-				return net.Dial(network, addr)
-			},
-		},
 	}
 
 	return &Client{
 		Registry:  registryv1connect.NewRegistryServiceClient(httpClient, serverURL, opts...),
 		Discovery: registryv1connect.NewDiscoveryServiceClient(httpClient, serverURL),
 		Access:    registryv1connect.NewAccessAgreementServiceClient(httpClient, serverURL, opts...),
+	}
+}
+
+func newHTTPClient(serverURL string) *http.Client {
+	if strings.HasPrefix(serverURL, "https://") {
+		// real TLS — standard HTTP/2 over TLS
+		return &http.Client{
+			Transport: &http2.Transport{
+				TLSClientConfig: &tls.Config{},
+			},
+		}
+	}
+
+	// plain h2c — HTTP/2 over cleartext (no TLS)
+	return &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+				return net.Dial(network, addr)
+			},
+		},
 	}
 }
 

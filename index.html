@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sockridge</title>
+    <title>Sockridge - ADI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
       rel="stylesheet"
@@ -1044,11 +1046,67 @@
         <span class="section-tag">// 04 — INSTALL</span>
         <h2 class="section-title">ONE COMMAND.<br />YOU'RE IN.</h2>
       </div>
+
       <div class="install-banner reveal">
-        <h3>▶ INSTALL SOCKRIDGE CLI</h3>
+        <h3>▶ macOS / Linux</h3>
         <div class="install-cmd">
           <span>curl -fsSL https://sockridge.com/install.sh | sh</span>
           <button class="copy-btn" onclick="copyInstall()">COPY</button>
+        </div>
+
+        <div
+          style="
+            margin-top: 1.5rem;
+            border-top: 2px solid var(--bdr);
+            padding-top: 1.2rem;
+          "
+        >
+          <div
+            style="
+              font-family: &quot;Press Start 2P&quot;, monospace;
+              font-size: 0.42rem;
+              color: var(--muted);
+              letter-spacing: 0.1em;
+              margin-bottom: 0.8rem;
+            "
+          >
+            ▸ WINDOWS / MANUAL
+          </div>
+          <div
+            style="
+              font-family: &quot;VT323&quot;, monospace;
+              font-size: 1rem;
+              color: var(--muted);
+              line-height: 1.8;
+            "
+          >
+            Download from GitHub releases, add to PATH.<br />
+            <a
+              href="https://github.com/Sockridge/sockridge/releases/latest"
+              style="color: var(--green); text-decoration: none"
+              onmouseover="this.style.textDecoration = 'underline'"
+              onmouseout="this.style.textDecoration = 'none'"
+            >
+              → github.com/Sockridge/sockridge/releases
+            </a>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 1.2rem;
+            border-top: 2px solid var(--bdr);
+            padding-top: 1.2rem;
+            font-family: &quot;VT323&quot;, monospace;
+            font-size: 1rem;
+            color: var(--muted);
+          "
+        >
+          After installing:<br />
+          <span style="color: var(--green)"
+            >sockridge auth register --handle yourname --server
+            http://sockridge.com:9000</span
+          >
         </div>
       </div>
     </section>
