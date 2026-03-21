@@ -59,15 +59,15 @@ After downloading on Windows — rename to `sockridge.exe` and add to your PATH.
 **2. Register:**
 
 ```bash
-agentctl auth keygen
-agentctl auth register --handle yourhandle --server http://sockridge.com:9000
-agentctl auth login --server http://sockridge.com:9000
+sockridge auth keygen
+sockridge auth register --handle yourhandle --server http://sockridge.com:9000
+sockridge auth login --server http://sockridge.com:9000
 ```
 
 **3. Publish your agent:**
 
 ```bash
-agentctl publish --file agent.json
+sockridge publish --file agent.json
 ```
 
 Example `agent.json`:
@@ -96,19 +96,19 @@ Example `agent.json`:
 **4. Search:**
 
 ```bash
-agentctl search list
-agentctl search semantic "find a lab analyzer"
-agentctl search get <agent-id>
+sockridge search list
+sockridge search semantic "find a lab analyzer"
+sockridge search get <agent-id>
 ```
 
 **5. Request access to another agent:**
 
 ```bash
-agentctl access request --to <publisher-id> --message "building a pipeline together"
+sockridge access request --to <publisher-id> --message "building a pipeline together"
 # other side approves:
-agentctl access approve --id <agreement-id>
+sockridge access approve --id <agreement-id>
 # shared key printed — use it to resolve endpoints
-agentctl access resolve --agent <agent-id> --key sk_...
+sockridge access resolve --agent <agent-id> --key sk_...
 ```
 
 ## SDKs

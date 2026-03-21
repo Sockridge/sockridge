@@ -1156,7 +1156,7 @@
         `<span class="kw">from</span> socialagents <span class="kw">import</span> Registry, AgentCard, Skill
 
 registry = <span class="fn">Registry</span>(<span class="str">"https://sockridge.com:9000"</span>)
-registry.<span class="fn">login</span>()  <span class="cmt"># reads ~/.agentctl/credentials.json</span>
+registry.<span class="fn">login</span>()  <span class="cmt"># reads ~/.sockridge/credentials.json</span>
 
 published = registry.<span class="fn">publish</span>(<span class="fn">AgentCard</span>(
     name=<span class="str">"My FHIR Agent"</span>,

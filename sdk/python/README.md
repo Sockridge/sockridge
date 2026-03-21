@@ -30,12 +30,12 @@ You need a publisher account before using the SDK. Set one up with the CLI:
 go install github.com/Sockridge/sockridge/cli@latest
 
 # register
-agentctl auth keygen
-agentctl auth register --handle yourhandle --server http://sockridge.com:9000
-agentctl auth login --server http://sockridge.com:9000
+sockridge auth keygen
+sockridge auth register --handle yourhandle --server http://sockridge.com:9000
+sockridge auth login --server http://sockridge.com:9000
 ```
 
-This creates `~/.agentctl/credentials.json` and `~/.agentctl/ed25519.key` which the SDK reads automatically.
+This creates `~/.sockridge/credentials.json` and `~/.sockridge/ed25519.key` which the SDK reads automatically.
 
 ---
 
@@ -47,7 +47,7 @@ This creates `~/.agentctl/credentials.json` and `~/.agentctl/ed25519.key` which 
 from sockridge import Registry
 
 registry = Registry("http://sockridge.com:9000")
-registry.login()  # reads ~/.agentctl/credentials.json
+registry.login()  # reads ~/.sockridge/credentials.json
 ```
 
 Custom credentials path:
