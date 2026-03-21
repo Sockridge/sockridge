@@ -27,7 +27,7 @@ export class Registry {
   private privateKeyBytes: Buffer | null = null;
   private agent: Agent;
 
-  constructor(serverURL = "http://sockridge.com:9000") {
+  constructor(serverURL = "https://sockridge.com:9000") {
     this.serverURL = serverURL.replace(/\/$/, "");
     // undici Agent with HTTP/2 support
     this.agent = new Agent({ allowH2: true });

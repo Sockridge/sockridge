@@ -25,8 +25,8 @@ go install github.com/Sockridge/sockridge/cli@latest
 
 # register
 sockridge auth keygen
-sockridge auth register --handle yourhandle --server http://sockridge.com:9000
-sockridge auth login --server http://sockridge.com:9000
+sockridge auth register --handle yourhandle --server https://sockridge.com:9000
+sockridge auth login --server https://sockridge.com:9000
 ```
 
 This creates `~/.sockridge/credentials.json` and `~/.sockridge/ed25519.key` which the SDK reads automatically.
@@ -40,7 +40,7 @@ This creates `~/.sockridge/credentials.json` and `~/.sockridge/ed25519.key` whic
 ```python
 from sockridge import Registry
 
-registry = Registry("http://sockridge.com:9000")
+registry = Registry("https://sockridge.com:9000")
 registry.login()  # reads ~/.sockridge/credentials.json
 ```
 
@@ -60,7 +60,7 @@ registry.login(
 ```python
 from sockridge import Registry, AgentCard, Skill, Capabilities
 
-registry = Registry("http://sockridge.com:9000")
+registry = Registry("https://sockridge.com:9000")
 registry.login()
 
 card = AgentCard(
@@ -98,7 +98,7 @@ The agent goes through automatic validation after publish:
 For agents that register themselves when they start:
 
 ```python
-registry = Registry("http://sockridge.com:9000")
+registry = Registry("https://sockridge.com:9000")
 published = registry.register_and_publish(card)
 print(f"registered: {published.id}")
 ```

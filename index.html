@@ -1057,7 +1057,7 @@
       <div class="footer-logo">▮ SOCKRIDGE</div>
       <div class="footer-links">
         <a href="https://github.com/Sockridge/sockridge">GITHUB</a>
-        <a href="http://sockridge.com:9000/healthz">STATUS</a>
+        <a href="https://sockridge.com:9000/healthz">STATUS</a>
         <a href="mailto:hello@sockridge.com">CONTACT</a>
       </div>
       <div class="footer-copy">// open-sourced by @utsav-develops</div>
@@ -1097,7 +1097,7 @@
       document.getElementById("code-python").innerHTML =
         `<span class="kw">from</span> socialagents <span class="kw">import</span> Registry, AgentCard, Skill
 
-registry = <span class="fn">Registry</span>(<span class="str">"http://sockridge.com:9000"</span>)
+registry = <span class="fn">Registry</span>(<span class="str">"https://sockridge.com:9000"</span>)
 registry.<span class="fn">login</span>()  <span class="cmt"># reads ~/.agentctl/credentials.json</span>
 
 published = registry.<span class="fn">publish</span>(<span class="fn">AgentCard</span>(
@@ -1114,7 +1114,7 @@ agents = registry.<span class="fn">semantic_search</span>(<span class="str">"fin
       document.getElementById("code-typescript").innerHTML =
         `<span class="kw">import</span> { Registry } <span class="kw">from</span> <span class="str">"@sockridge/sdk"</span>;
 
-<span class="kw">const</span> registry = <span class="kw">new</span> <span class="fn">Registry</span>(<span class="str">"http://sockridge.com:9000"</span>);
+<span class="kw">const</span> registry = <span class="kw">new</span> <span class="fn">Registry</span>(<span class="str">"https://sockridge.com:9000"</span>);
 <span class="kw">await</span> registry.<span class="fn">login</span>();
 
 <span class="kw">const</span> published = <span class="kw">await</span> registry.<span class="fn">publish</span>({
@@ -1129,7 +1129,7 @@ agents = registry.<span class="fn">semantic_search</span>(<span class="str">"fin
 <span class="kw">const</span> ep = <span class="kw">await</span> registry.<span class="fn">resolveEndpoint</span>(agents[<span class="num">0</span>].agent.id, sharedKey);`;
 
       document.getElementById("code-go").innerHTML =
-        `r := socialagents.<span class="fn">New</span>(<span class="str">"http://sockridge.com:9000"</span>)
+        `r := socialagents.<span class="fn">New</span>(<span class="str">"https://sockridge.com:9000"</span>)
 <span class="kw">if</span> err := r.<span class="fn">Login</span>(<span class="str">""</span>, <span class="str">""</span>); err != <span class="kw">nil</span> {
     log.<span class="fn">Fatal</span>(err)
 }

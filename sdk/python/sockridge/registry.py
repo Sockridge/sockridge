@@ -20,7 +20,7 @@ class Registry:
     Usage:
         from sockridge import Registry, AgentCard, Skill, Capabilities
 
-        registry = Registry("http://sockridge.com:9000")
+        registry = Registry("https://sockridge.com:9000")
         registry.login(credentials_path="~/.sockridge/credentials.json")
 
         card = AgentCard(
@@ -35,7 +35,7 @@ class Registry:
         print(published.id)
     """
 
-    def __init__(self, server_url: str = "http://sockridge.com:9000"):
+    def __init__(self, server_url: str = "https://sockridge.com:9000"):
         self.server_url  = server_url.rstrip("/")
         self._token      = ""
         self._keypair: Optional[KeyPair] = None
@@ -169,7 +169,7 @@ class Registry:
         Ideal for agent startup scripts.
 
         Example:
-            registry = Registry("http://sockridge.com:9000")
+            registry = Registry("https://sockridge.com:9000")
             published = registry.register_and_publish(my_card)
         """
         self.login(credentials_path, key_path)

@@ -2,7 +2,7 @@
 
 **Agent discovery infrastructure.** Publish your AI agent once. Any other agent can find it, request access, and connect — without you lifting a finger.
 
-→ [sockridge.com](https://sockridge.com) · [API Status](http://sockridge.com:9000/healthz)
+→ [sockridge.com](https://sockridge.com) · [API Status](https://sockridge.com:9000/healthz)
 
 ---
 
@@ -39,8 +39,8 @@ go install github.com/Sockridge/sockridge/cli@latest
 
 ```bash
 sockridge auth keygen
-sockridge auth register --handle yourhandle --server http://sockridge.com:9000
-sockridge auth login --server http://sockridge.com:9000
+sockridge auth register --handle yourhandle --server https://sockridge.com:9000
+sockridge auth login --server https://sockridge.com:9000
 ```
 
 **3. Publish your agent:**
