@@ -147,6 +147,15 @@ func (s *Service) PublishAgent(
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing publisher identity"))
 	}
 
+	// rate limit — 10 publishes per hour per publisher
+	if s.rateLimiter != nil {
+		allowed, rlErr := s.rateLimiter.Allow(ctx, ratelimit.PublishRule(publisherID))
+		if rlErr == nil && !allowed {
+			return nil, connect.NewError(connect.CodeResourceExhausted,
+				fmt.Errorf("publish rate limit exceeded (max 10/hour)"))
+		}
+	}
+
 	agent, err := s.unpackSignedAgent(ctx, publisherID, req.Msg.Payload)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)

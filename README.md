@@ -2,7 +2,7 @@
 
 **Agent discovery infrastructure.** Publish your AI agent once. Any other agent can find it, request access, and connect — without you lifting a finger.
 
-→ [sockridge.com](https://sockridge.com) · [API Status](http://sockridge.com:9000/healthz)
+→ [sockridge.com](https://sockridge.com) · [API Status](http://sockridge.com:9000/healthz) · [Metrics](http://sockridge.com:9000/metrics)
 
 ---
 
@@ -19,17 +19,15 @@ Registry never sees that call
 
 ## Stack
 
-| Layer      | Tech                                                           |
-| ---------- | -------------------------------------------------------------- |
-| Server     | Go, ConnectRPC, Protobuf                                       |
-| Storage    | ScyllaDB (agents), Redis (cache/nonces), pgvector (embeddings) |
-| Embedder   | Python FastAPI + sentence-transformers (all-MiniLM-L6-v2)      |
-| Auth       | Ed25519 challenge-response + JWT                               |
-| Gatekeeper | Groq (llama-3.1-8b-instant)                                    |
+| Layer      | Tech                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| Server     | Go, ConnectRPC, Protobuf                                              |
+| Storage    | ScyllaDB (agents), Redis (cache/rate limiting), pgvector (embeddings) |
+| Embedder   | Python FastAPI + sentence-transformers (all-MiniLM-L6-v2)             |
+| Auth       | Ed25519 challenge-response + JWT                                      |
+| Gatekeeper | Anthropic Claude Haiku (Groq fallback)                                |
 
-## Quick start
-
-**1. Install the CLI:**
+## Install CLI
 
 **macOS / Linux:**
 
@@ -37,7 +35,7 @@ Registry never sees that call
 curl -fsSL https://sockridge.com/install.sh | sh
 ```
 
-**Manual download (all platforms):**
+**Manual download:**
 
 | Platform            | Download                                                                                                                   |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -54,20 +52,22 @@ chmod +x sockridge-macos-arm64
 sudo mv sockridge-macos-arm64 /usr/local/bin/sockridge
 ```
 
-After downloading on Windows — rename to `sockridge.exe` and add to your PATH.
-
-**2. Register:**
+## Quick start
 
 ```bash
+# register
 sockridge auth keygen
 sockridge auth register --handle yourhandle --server http://sockridge.com:9000
 sockridge auth login --server http://sockridge.com:9000
-```
 
-**3. Publish your agent:**
-
-```bash
+# publish your agent
 sockridge publish --file agent.json
+
+# search
+sockridge search list
+sockridge search semantic "find a lab analyzer"
+sockridge search get <agent-id>
+sockridge search mine <agent-id>   # your own agent, shows URL
 ```
 
 Example `agent.json`:
@@ -76,7 +76,7 @@ Example `agent.json`:
 {
   "name": "My Agent",
   "description": "Does something useful for other agents",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "protocolVersion": "0.3.0",
   "url": "https://my-agent.example.com",
   "skills": [
@@ -87,54 +87,83 @@ Example `agent.json`:
       "tags": ["thing", "useful"]
     }
   ],
-  "capabilities": {
-    "streaming": true
-  }
+  "capabilities": { "streaming": true }
 }
 ```
 
-**4. Search:**
+## Access agreements
 
 ```bash
-sockridge search list
-sockridge search semantic "find a lab analyzer"
-sockridge search get <agent-id>
+# request mutual access with another publisher
+sockridge access request --to <publisher-id> --message "building a pipeline"
+
+# list incoming requests
+sockridge access pending
+
+# approve — generates shared key
+sockridge access approve --id <agreement-id>
+
+# set expiry (optional)
+sockridge access set-expiry --id <agreement-id> --days 30
+
+# resolve agent endpoint using shared key
+sockridge access resolve --agent <agent-id> --key sk_...
+
+# revoke
+sockridge access revoke --id <agreement-id>
 ```
 
-**5. Request access to another agent:**
+## Webhooks
 
 ```bash
-sockridge access request --to <publisher-id> --message "building a pipeline together"
-# other side approves:
-sockridge access approve --id <agreement-id>
-# shared key printed — use it to resolve endpoints
-sockridge access resolve --agent <agent-id> --key sk_...
+# register a webhook
+sockridge webhook register \
+  --url https://myserver.com/hooks \
+  --event access_request \
+  --event agent_active
+
+# list webhooks
+sockridge webhook list
+
+# test delivery
+sockridge webhook test --id <webhook-id>
+
+# delete
+sockridge webhook delete --id <webhook-id>
+```
+
+Available events: `access_request`, `access_approved`, `access_denied`, `access_revoked`, `agent_active`, `agent_inactive`, `agent_published`, `agent_rejected`
+
+Webhooks are signed with HMAC-SHA256. Verify with the `X-Sockridge-Signature` header.
+
+## Audit log
+
+```bash
+sockridge audit list
+sockridge audit list --limit 100
 ```
 
 ## SDKs
 
-| Language   | Install                                                                              |
-| ---------- | ------------------------------------------------------------------------------------ |
-| Python     | `pip install git+https://github.com/Sockridge/sockridge.git#subdirectory=sdk/python` |
-| TypeScript | `npm install github:Sockridge/sockridge`                                             |
-| Go         | `go get github.com/Sockridge/sockridge/sdk/go`                                       |
+| Language   | Install                                        |
+| ---------- | ---------------------------------------------- |
+| Python     | `pip install sockridge`                        |
+| TypeScript | `npm install @sockridge/sdk`                   |
+| Go         | `go get github.com/Sockridge/sockridge/sdk/go` |
 
-See `sdk/python/README.md` for Python SDK docs.
+```python
+from sockridge import Registry, AgentCard, Skill
 
-## Self-hosting
+registry = Registry("http://sockridge.com:9000")
+registry.login()
 
-```bash
-git clone https://github.com/Sockridge/sockridge.git
-cd SocialAgents
-
-export AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY=gsk_...
-or
-export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
-
-docker compose up -d --build
+published = registry.publish(AgentCard(
+    name="My Agent",
+    description="Does something useful",
+    url="https://my-agent.example.com",
+    skills=[Skill(id="do.thing", name="Do Thing", description="Does the thing", tags=["thing"])]
+))
 ```
-
-See `RUNBOOK.md` for production deployment.
 
 ## How agents get approved
 
@@ -144,12 +173,42 @@ Every published agent goes through the gatekeeper pipeline automatically:
 publish → PENDING
   → validate fields (name, description, skills required)
   → ping URL (is the agent actually running?)
-  → Groq scores the card (0.0 - 1.0)
+  → GET /.well-known/agent.json (A2A compliance check)
+  → verify name + skills match the submitted card
+  → AI scores the card (0.0 - 1.0)
   → score >= 0.4 → ACTIVE
-  → score < 0.4 → REJECTED
+  → score < 0.4  → REJECTED
 ```
 
-Rejected agents can fix their card and republish.
+Your agent must expose `/.well-known/agent.json` returning a valid AgentCard JSON.
+
+## Rate limits
+
+| Operation | Limit                 |
+| --------- | --------------------- |
+| publish   | 10/hour per publisher |
+| search    | 100/min per IP        |
+| resolve   | 50/min per shared key |
+| login     | 10/min per publisher  |
+
+## Metrics
+
+```bash
+curl http://sockridge.com:9000/metrics
+```
+
+Prometheus-compatible output including agent counts by status, request totals, rate limit hits, and uptime.
+
+## Self-hosting
+
+```bash
+git clone https://github.com/Sockridge/sockridge.git
+cd sockridge
+cp .env.example .env  # edit with your keys
+docker compose up -d --build
+```
+
+See `RUNBOOK.md` for full production deployment guide.
 
 ## License
 

@@ -17,11 +17,11 @@ enum TransportType {
 
 enum AgentStatus {
   AGENT_STATUS_UNSPECIFIED  = 0;
-  AGENT_STATUS_PENDING      = 1; // submitted, gatekeeper running
-  AGENT_STATUS_ACTIVE       = 2; // approved and live
-  AGENT_STATUS_REJECTED     = 3; // gatekeeper rejected
-  AGENT_STATUS_INACTIVE     = 4; // was active, now unreachable
-  AGENT_STATUS_DEPRECATED   = 5; // manually deprecated by publisher
+  AGENT_STATUS_PENDING      = 1;
+  AGENT_STATUS_ACTIVE       = 2;
+  AGENT_STATUS_REJECTED     = 3;
+  AGENT_STATUS_INACTIVE     = 4;
+  AGENT_STATUS_DEPRECATED   = 5;
 }
 
 enum InputOutputMode {
@@ -33,7 +33,36 @@ enum InputOutputMode {
   INPUT_OUTPUT_MODE_STRUCTURED  = 5;
 }
 
+enum AuthScheme {
+  AUTH_SCHEME_UNSPECIFIED = 0;
+  AUTH_SCHEME_NONE        = 1; // no auth required
+  AUTH_SCHEME_API_KEY     = 2; // x-api-key or Bearer token
+  AUTH_SCHEME_OAUTH2      = 3; // OAuth2 flow
+  AUTH_SCHEME_OPENID      = 4; // OpenID Connect
+}
+
 // ─── Core Models ─────────────────────────────────────────────────────────────
+
+// Provider — who built and operates this agent
+message Provider {
+  string name         = 1; // e.g. "Acme Corp" or "Jane Doe"
+  string url          = 2; // organization or personal website
+  string contact      = 3; // email or support URL
+}
+
+// Authentication — how callers authenticate with this agent
+message Authentication {
+  AuthScheme scheme       = 1;
+  string     description  = 2; // human-readable auth instructions
+  string     token_url    = 3; // OAuth2 token endpoint (if applicable)
+  string     scopes       = 4; // required OAuth2 scopes (space-separated)
+}
+
+// SkillExample — example input/output for a skill
+message SkillExample {
+  string input  = 1; // example input payload
+  string output = 2; // example output payload
+}
 
 message Skill {
   string          id          = 1;
@@ -41,6 +70,13 @@ message Skill {
   string          description = 3;
   repeated string tags        = 4;
   repeated float  embedding   = 5 [packed = true]; // server-populated
+
+  // per-skill I/O overrides (if different from agent defaults)
+  repeated InputOutputMode input_modes  = 6;
+  repeated InputOutputMode output_modes = 7;
+
+  // examples help other agents understand how to use this skill
+  repeated SkillExample examples = 8;
 }
 
 message Capabilities {
@@ -56,16 +92,15 @@ message Interface {
   bool          primary   = 3;
 }
 
-// GatekeeperResult is the output of the automated validation pipeline.
-// Stored alongside the AgentCard and visible to consumers.
+// GatekeeperResult — output of automated validation pipeline
 message GatekeeperResult {
   bool   approved         = 1;
-  float  confidence_score = 2; // 0.0 - 1.0
-  string reason           = 3; // human-readable explanation
-  bool   reachable        = 4; // did the ping succeed?
-  int32  ping_latency_ms  = 5; // response time in ms
-  bool   a2a_compliant    = 6; // responded to /.well-known/agent.json
-  bool   a2a_matches_card = 7; // card fields match submission
+  float  confidence_score = 2;
+  string reason           = 3;
+  bool   reachable        = 4;
+  int32  ping_latency_ms  = 5;
+  bool   a2a_compliant    = 6;
+  bool   a2a_matches_card = 7;
   google.protobuf.Timestamp evaluated_at = 8;
 }
 
@@ -75,7 +110,7 @@ message AgentCard {
   string description      = 3;
   string version          = 4;
   string protocol_version = 5;
-  string url              = 6; // primary endpoint url
+  string url              = 6; // primary endpoint URL
 
   repeated Interface       interfaces           = 7;
   repeated Skill           skills               = 8;
@@ -87,13 +122,21 @@ message AgentCard {
   string publisher_id = 12;
   string public_key   = 13;
 
-  // lifecycle
-  AgentStatus               status             = 14;
-  GatekeeperResult          gatekeeper_result  = 15; // populated after validation
-  google.protobuf.Timestamp created_at         = 16;
-  google.protobuf.Timestamp updated_at         = 17;
+  // A2A spec fields
+  Provider       provider          = 14; // who built this agent
+  Authentication authentication    = 15; // how to authenticate with this agent
+  string         icon_url          = 16; // agent avatar URL
+  string         documentation_url = 17; // link to agent docs
+  repeated string protocol_versions = 18; // supported A2A versions e.g. ["0.3.0", "0.4.0"]
+  repeated string extensions        = 19; // supported protocol extensions
 
-  bytes metadata = 18;
+  // lifecycle
+  AgentStatus               status            = 20;
+  GatekeeperResult          gatekeeper_result = 21;
+  google.protobuf.Timestamp created_at        = 22;
+  google.protobuf.Timestamp updated_at        = 23;
+
+  bytes metadata = 24;
 }
 
 // ─── Auth Models ─────────────────────────────────────────────────────────────
@@ -111,36 +154,46 @@ message SignedPayload {
   string key_id    = 3;
 }
 
-// ─── Access Token Models ──────────────────────────────────────────────────────
-
-// AccessToken is issued to a consumer (human or agent) granting them
-// the right to retrieve an agent's endpoint URL and communicate with it.
-message AccessToken {
-  string id          = 1; // uuid
-  string agent_id    = 2; // which agent this grants access to
-  string consumer_id = 3; // who requested it (publisher_id or external id)
-  string token       = 4; // the actual bearer token value
-  google.protobuf.Timestamp expires_at  = 5;
-  google.protobuf.Timestamp created_at  = 6;
-}
-
 // ─── Access Agreement Models ──────────────────────────────────────────────────
 
 enum AgreementStatus {
   AGREEMENT_STATUS_UNSPECIFIED = 0;
-  AGREEMENT_STATUS_PENDING     = 1; // request sent, waiting for approval
-  AGREEMENT_STATUS_ACTIVE      = 2; // approved, shared key generated
-  AGREEMENT_STATUS_DENIED      = 3; // rejected by receiving publisher
-  AGREEMENT_STATUS_REVOKED     = 4; // was active, one side revoked it
+  AGREEMENT_STATUS_PENDING     = 1;
+  AGREEMENT_STATUS_ACTIVE      = 2;
+  AGREEMENT_STATUS_DENIED      = 3;
+  AGREEMENT_STATUS_REVOKED     = 4;
 }
 
 message AccessAgreement {
-  string          id                = 1; // uuid
-  string          requester_id      = 2; // publisher who sent the request
-  string          receiver_id       = 3; // publisher who approves/denies
-  string          message           = 4; // "why I want to connect"
-  AgreementStatus status            = 5;
-  string          shared_key        = 6; // set on approval, same for both sides
+  string          id           = 1;
+  string          requester_id = 2;
+  string          receiver_id  = 3;
+  string          message      = 4;
+  AgreementStatus status       = 5;
+  string          shared_key   = 6;
   google.protobuf.Timestamp requested_at = 7;
-  google.protobuf.Timestamp resolved_at  = 8; // when approved/denied/revoked
+  google.protobuf.Timestamp resolved_at  = 8;
+  google.protobuf.Timestamp expires_at   = 9;  // optional, null = never expires
+}
+
+// Webhook — publisher registers a URL to receive push events
+message Webhook {
+  string id           = 1;
+  string publisher_id = 2;
+  string url          = 3; // HTTPS endpoint to receive events
+  repeated string events = 4; // which events to subscribe to
+  string secret      = 5; // HMAC-SHA256 signing secret
+  bool   active      = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// ─── Access Token Models ──────────────────────────────────────────────────────
+
+message AccessToken {
+  string id          = 1;
+  string agent_id    = 2;
+  string consumer_id = 3;
+  string token       = 4;
+  google.protobuf.Timestamp expires_at  = 5;
+  google.protobuf.Timestamp created_at  = 6;
 }

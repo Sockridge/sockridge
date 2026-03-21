@@ -29,124 +29,83 @@ brew install go          # need 1.23+
 brew install docker      # or Docker Desktop
 ```
 
-### 2. Install buf plugins for Go codegen
+### 2. Install buf plugins
 
 ```bash
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
-
-# make sure $GOPATH/bin is in your PATH
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-### 3. Generate Go code from proto
+### 3. Generate proto code
 
 ```bash
-buf dep update   # resolves googleapis dependency in buf.yaml
-buf generate     # writes gen/go/agentregistry/v1/*.go
+buf dep update
+buf generate
 
-# you should now see:
+# expected output:
 # gen/go/agentregistry/v1/agent.pb.go
 # gen/go/agentregistry/v1/registry.pb.go
 # gen/go/agentregistry/v1/registryv1connect/registry.connect.go
 ```
 
-### 4. Tidy Go modules
+### 4. Tidy modules
 
 ```bash
 cd server && go mod tidy && cd ..
 cd cli    && go mod tidy && cd ..
 cd sdk/go && go mod tidy && cd ../..
-# or from root: go work sync
 ```
 
-### 5. Verify it compiles
+### 5. Run tests
 
 ```bash
-cd server && go build ./... && cd ..
-cd cli    && go build ./... && cd ..
+cd server && go test ./... -v && cd ..
+
+# expected: 42 tests passing across:
+# auth, gatekeeper, healthmon, metrics, ratelimit, webhook
 ```
 
-### 6. Run auth tests
+### 6. Spin up stack
 
 ```bash
-cd server && go test ./internal/auth/... -v && cd ..
-
-# expected output:
-# --- PASS: TestChallengeVerify_HappyPath
-# --- PASS: TestVerify_WrongSignature
-# --- PASS: TestVerify_NonceIsOneTimeUse
-```
-
-### 7. Spin up the full stack
-
-```bash
-export AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY=sk-ant-...   # optional
-export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...           # optional fallback
+cp .env.example .env
+# edit .env with your keys
 
 docker compose up --build
-
-# waits for:
-# scylla    → healthy (~30s on first boot)
-# redis     → healthy
-# postgres  → healthy
-# embedder  → healthy
-# server    → starts on :9000
 ```
 
-### 8. Build the CLI
+### 7. Build CLI
 
 ```bash
 cd cli && go build -o ../bin/sockridge . && cd ..
 export PATH="$PATH:$(pwd)/bin"
 ```
 
-### 9. Smoke test end-to-end
+### 8. Smoke test
 
 ```bash
-# register
 sockridge auth keygen
 sockridge auth register --handle utsav
 sockridge auth login
-
-# publish a test agent
-cat > /tmp/test-agent.json << 'JSON'
-{
-  "name": "Test FHIR Agent",
-  "description": "Analyzes lab trends from FHIR",
-  "version": "0.1.0",
-  "protocolVersion": "0.3.0",
-  "url": "https://your-agent.example.com",
-  "skills": [
-    {
-      "id": "lab.analyze",
-      "name": "Lab Analyzer",
-      "description": "Detects anomalies in lab result trends",
-      "tags": ["fhir", "labs", "analysis"]
-    }
-  ],
-  "capabilities": { "streaming": true, "toolUse": true }
-}
-JSON
-
-sockridge publish --file /tmp/test-agent.json
+sockridge publish --file test_agents/fhir.json
 sockridge search list
-sockridge search semantic "lab trend analyzer"
-
-# watch for new agents in another terminal
-sockridge search watch --tag fhir
+sockridge search semantic "lab analyzer"
+sockridge audit list
+curl http://localhost:9000/metrics
 ```
 
-### Known local issues
+### Known issues
 
-| Issue                                        | Fix                                                                                                                                |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| ScyllaDB takes ~30s to be ready              | docker compose already has healthcheck retries — just wait                                                                         |
-| `buf generate` fails with "plugin not found" | make sure `$GOPATH/bin` is in PATH, re-run `go install` for each plugin                                                            |
-| `go mod tidy` fails on "cannot find module"  | run `buf generate` first — `gen/go/` must exist before tidy                                                                        |
-| "http2: frame too large" on gRPC calls       | make sure you're hitting port 9000 with `http://` (h2c) not `https://`                                                             |
-| Semantic search returns nothing              | drop ivfflat index: `docker compose exec postgres psql -U agentregistry -c "DROP INDEX IF EXISTS skill_embeddings_embedding_idx;"` |
+| Issue                                    | Fix                                                                                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| ScyllaDB takes ~30s to start             | wait — healthcheck handles it                                                                                                      |
+| `buf generate` fails "plugin not found"  | re-run `go install` for each plugin, check `$GOPATH/bin` in PATH                                                                   |
+| `go mod tidy` fails "cannot find module" | run `buf generate` first                                                                                                           |
+| "http2: frame too large"                 | use `http://` (h2c) not `https://` for local                                                                                       |
+| Semantic search returns nothing          | drop ivfflat index: `docker compose exec postgres psql -U agentregistry -c "DROP INDEX IF EXISTS skill_embeddings_embedding_idx;"` |
+| Rate limit test — all publishes succeed  | check `.env` has Redis connected, restart docker                                                                                   |
 
 ---
 
@@ -155,42 +114,36 @@ sockridge search watch --tag fhir
 ### First time
 
 ```bash
-# clone
 git clone https://github.com/Sockridge/sockridge.git
 cd sockridge
 
-# create .env file with your keys
 cat > .env << 'EOF'
 AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY=sk-ant-...
 AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
 AGENTREGISTRY_AUTH_JWT_SECRET=your-strong-random-secret
 EOF
 
-# generate proto (requires buf + Go)
 buf generate
-
-# start everything
 docker compose up -d --build
 
-# verify
 docker compose ps
 curl http://localhost:9000/healthz
+curl http://localhost:9000/metrics
 ```
 
-### Update (redeploy)
+### Update
 
 ```bash
 cd /var/www/sockridge
 git pull
+buf generate          # only if proto changed
 docker compose up -d --build
 ```
-
-Only changed images are rebuilt. ScyllaDB and Postgres data are preserved in Docker volumes.
 
 ### Rollback
 
 ```bash
-git log --oneline -10          # find previous commit
+git log --oneline -10
 git checkout <commit-hash>
 docker compose up -d --build
 ```
@@ -199,18 +152,18 @@ docker compose up -d --build
 
 ## Environment Variables
 
-| Variable                                 | Required | Description                                                                            |
-| ---------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
-| `AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY` | No       | Anthropic key for AI scoring (first priority)                                          |
-| `AGENTREGISTRY_GATEKEEPER_GROQ_KEY`      | No       | Groq key for AI scoring (fallback). Without either, agents auto-approve with score 0.5 |
-| `AGENTREGISTRY_SCYLLA_HOSTS`             | No       | Defaults to `scylla:9042`                                                              |
-| `AGENTREGISTRY_SCYLLA_KEYSPACE`          | No       | Defaults to `agentregistry`                                                            |
-| `AGENTREGISTRY_REDIS_ADDR`               | No       | Defaults to `redis:6379`                                                               |
-| `AGENTREGISTRY_POSTGRES_DSN`             | No       | Defaults to docker compose postgres                                                    |
-| `AGENTREGISTRY_EMBEDDER_URL`             | No       | Defaults to `http://embedder:8000`                                                     |
-| `AGENTREGISTRY_AUTH_JWT_SECRET`          | No       | Defaults to `dev-secret` — **change in production**                                    |
+| Variable                                 | Required | Description                                                      |
+| ---------------------------------------- | -------- | ---------------------------------------------------------------- |
+| `AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY` | No       | Anthropic key — first priority for AI scoring                    |
+| `AGENTREGISTRY_GATEKEEPER_GROQ_KEY`      | No       | Groq key — fallback. Without either, auto-approve with score 0.5 |
+| `AGENTREGISTRY_AUTH_JWT_SECRET`          | No       | Defaults to `dev-secret` — **change in production**              |
+| `AGENTREGISTRY_SCYLLA_HOSTS`             | No       | Defaults to `scylla:9042`                                        |
+| `AGENTREGISTRY_SCYLLA_KEYSPACE`          | No       | Defaults to `agentregistry`                                      |
+| `AGENTREGISTRY_REDIS_ADDR`               | No       | Defaults to `redis:6379`                                         |
+| `AGENTREGISTRY_POSTGRES_DSN`             | No       | Defaults to docker compose postgres                              |
+| `AGENTREGISTRY_EMBEDDER_URL`             | No       | Defaults to `http://embedder:8000`                               |
 
-Set a strong JWT secret:
+Generate a strong JWT secret:
 
 ```bash
 export AGENTREGISTRY_AUTH_JWT_SECRET=$(openssl rand -hex 32)
@@ -220,29 +173,22 @@ export AGENTREGISTRY_AUTH_JWT_SECRET=$(openssl rand -hex 32)
 
 ## Monitoring
 
-### Check all containers
+### Containers
 
 ```bash
 docker compose ps
 docker stats --no-stream
 ```
 
-### Check logs
+### Logs
 
 ```bash
-# all services
-docker compose logs -f
-
-# specific service
 docker compose logs -f server
 docker compose logs -f embedder
-docker compose logs -f scylla
-
-# live gatekeeper activity
 docker compose logs -f server | grep -i "gatekeeper\|score\|approved\|rejected\|WARN\|ERROR"
 ```
 
-### Check gatekeeper scoring mode
+### Gatekeeper mode
 
 ```bash
 docker compose logs server | grep gatekeeper
@@ -251,19 +197,58 @@ docker compose logs server | grep gatekeeper
 # "gatekeeper running without AI scoring ..."
 ```
 
-### Check pgvector embeddings
+### Health monitor
 
 ```bash
-docker compose exec postgres psql -U agentregistry -c \
-  "SELECT COUNT(*) FROM skill_embeddings;"
+docker compose logs -f server | grep -i "health monitor"
+# "health monitor started (interval: 5m, max failures: 3)"
+# "health monitor: checking N agents"
+# "agent X marked INACTIVE after 3 failures"
+# "agent X marked ACTIVE (recovered)"
 ```
 
-### Check ScyllaDB agents
+### Metrics
 
 ```bash
+curl http://localhost:9000/metrics
+
+# key metrics:
+# sockridge_agents_total{status="active"}
+# sockridge_requests_total{operation="publish"}
+# sockridge_rate_limit_total
+# sockridge_uptime_seconds
+```
+
+### Database checks
+
+```bash
+# agents in ScyllaDB
 docker compose exec scylla cqlsh -e \
   "SELECT agent_id, publisher_id FROM agentregistry.agents;"
+
+# embeddings in Postgres
+docker compose exec postgres psql -U agentregistry -c \
+  "SELECT COUNT(*) FROM skill_embeddings;"
+
+# webhooks
+docker compose exec scylla cqlsh -e \
+  "SELECT webhook_id, publisher_id, url FROM agentregistry.webhooks;"
+
+# audit log
+docker compose exec scylla cqlsh -e \
+  "SELECT publisher_id, action, occurred_at FROM agentregistry.audit_events LIMIT 20;"
 ```
+
+---
+
+## Rate Limits
+
+| Operation | Limit | Window                    |
+| --------- | ----- | ------------------------- |
+| publish   | 10    | per hour per publisher    |
+| search    | 100   | per minute per IP         |
+| resolve   | 50    | per minute per shared key |
+| login     | 10    | per minute per publisher  |
 
 ---
 
@@ -272,15 +257,12 @@ docker compose exec scylla cqlsh -e \
 ### ScyllaDB
 
 ```bash
-# snapshot
 docker compose exec scylla nodetool snapshot agentregistry
-
-# copy snapshot out
 docker cp sockridge-scylla-1:/var/lib/scylla/data/agentregistry \
   ./backups/scylla-$(date +%Y%m%d)
 ```
 
-### Postgres (embeddings)
+### Postgres
 
 ```bash
 docker compose exec postgres pg_dump -U agentregistry agentregistry \
@@ -289,7 +271,7 @@ docker compose exec postgres pg_dump -U agentregistry agentregistry \
 
 ### Redis
 
-Redis is cache only — no backup needed. Data rebuilds on next request.
+Cache only — no backup needed.
 
 ---
 
@@ -297,19 +279,16 @@ Redis is cache only — no backup needed. Data rebuilds on next request.
 
 ```bash
 df -h
+free -h
 docker system df
 sudo du -sh /var/lib/docker
-free -h
 ```
 
-### Clean up unused Docker resources
+### Cleanup
 
 ```bash
-# safe — removes stopped containers, dangling images, unused networks
-docker system prune -f
-
-# aggressive — removes all unused images (will re-download on next deploy)
-docker system prune -a -f
+docker system prune -f          # safe
+docker system prune -a -f       # aggressive — re-downloads on next build
 ```
 
 ---
@@ -320,50 +299,43 @@ docker system prune -a -f
 
 ```bash
 docker compose logs embedder
-# if "curl not found": add RUN apt-get install -y curl to embedder/Dockerfile
+# add curl: RUN apt-get install -y curl to embedder/Dockerfile
 ```
 
-### ScyllaDB stuck in starting
-
-ScyllaDB takes 30-60s. Wait and check:
+### ScyllaDB stuck starting
 
 ```bash
 docker compose logs scylla | tail -20
+# takes 30-60s — just wait
 ```
 
-### Server can't connect to ScyllaDB
+### Gatekeeper not using AI scoring
 
 ```bash
-docker compose ps scylla
-docker compose exec scylla cqlsh -e "DESCRIBE KEYSPACES;"
+docker compose exec server env | grep GATEKEEPER
+# if empty: keys aren't in .env or docker wasn't restarted
 ```
 
-### JWT expired / auth failing
+### Webhook not delivering
 
-Sessions expire after 1 hour:
+```bash
+docker compose logs -f server | grep webhook
+# check URL is reachable from VPS
+# test: sockridge webhook test --id <id>
+```
+
+### JWT expired
 
 ```bash
 sockridge auth login
 ```
 
-### "no space left on device" during Docker build
-
-The embedder image is large (~2GB). Clean up first:
+### "no space left on device" during build
 
 ```bash
 docker system prune -a --volumes -f
 docker compose up -d --build
 ```
-
-### Gatekeeper not using AI scoring
-
-Check `.env` file has the keys and Docker picked them up:
-
-```bash
-docker compose exec server env | grep GATEKEEPER
-```
-
-If empty, keys aren't in `.env` or Docker wasn't restarted after adding them.
 
 ---
 
@@ -372,7 +344,7 @@ If empty, keys aren't in `.env` or Docker wasn't restarted after adding them.
 ```bash
 sudo ufw allow 22     # SSH
 sudo ufw allow 80     # website
-sudo ufw allow 443    # website HTTPS
+sudo ufw allow 443    # HTTPS
 sudo ufw allow 9000   # registry API
 sudo ufw enable
 sudo ufw status
@@ -383,20 +355,20 @@ sudo ufw status
 ## Nginx
 
 ```bash
-sudo nginx -t                           # test config
-sudo systemctl reload nginx             # reload
-sudo tail -f /var/log/nginx/access.log  # access logs
-sudo tail -f /var/log/nginx/error.log   # error logs
-sudo certbot renew --dry-run            # test SSL renewal
+sudo nginx -t
+sudo systemctl reload nginx
+sudo tail -f /var/log/nginx/error.log
+sudo certbot renew --dry-run
 ```
 
 ---
 
 ## Scale Notes
 
-Current setup handles ~100 concurrent agents on a 4GB VPS. When you need more:
+Current setup handles ~100 concurrent agents on a 4GB VPS.
 
-- **ScyllaDB** — increase `--memory` flag and `--smp` (CPU cores) in docker-compose.yml
-- **Embedder** — switch to `pytorch/pytorch` base image for GPU support
-- **Postgres** — add ivfflat index once you have >1000 agents: `CREATE INDEX ON skill_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists=100);`
+- **ScyllaDB** — increase `--memory` and `--smp` in docker-compose.yml
+- **Embedder** — switch to `pytorch/pytorch` base image for GPU
+- **Postgres** — add ivfflat index when >1000 agents: `CREATE INDEX ON skill_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists=100);`
 - **Server** — stateless, run multiple replicas behind a load balancer
+- **Metrics** — add Prometheus + Grafana for dashboarding at scale

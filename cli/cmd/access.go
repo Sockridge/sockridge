@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 
+	"time"
+
 	"connectrpc.com/connect"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/Sockridge/sockridge/cli/internal/keystore"
 	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
@@ -27,12 +30,13 @@ func NewAccessCmd() *cobra.Command {
 		newListAgreementsCmd(),
 		newResolveCmd(),
 		newGetAgreementCmd(),
+		newSetExpiryCmd(),
 	)
 
 	return access
 }
 
-// ── sockridge access request ───────────────────────────────────────────────────
+// ── agentctl access request ───────────────────────────────────────────────────
 
 func newRequestCmd() *cobra.Command {
 	var (
@@ -49,7 +53,7 @@ func newRequestCmd() *cobra.Command {
 				return err
 			}
 			if creds.SessionToken == "" {
-				return fmt.Errorf("not logged in — run: sockridge auth login")
+				return fmt.Errorf("not logged in — run: agentctl auth login")
 			}
 
 			c := newClient("")
@@ -80,7 +84,7 @@ func newRequestCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access pending ───────────────────────────────────────────────────
+// ── agentctl access pending ───────────────────────────────────────────────────
 
 func newListPendingCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -124,7 +128,7 @@ func newListPendingCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access approve ───────────────────────────────────────────────────
+// ── agentctl access approve ───────────────────────────────────────────────────
 
 func newApproveCmd() *cobra.Command {
 	var agreementID string
@@ -164,7 +168,7 @@ func newApproveCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access deny ──────────────────────────────────────────────────────
+// ── agentctl access deny ──────────────────────────────────────────────────────
 
 func newDenyCmd() *cobra.Command {
 	var agreementID string
@@ -200,7 +204,7 @@ func newDenyCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access revoke ────────────────────────────────────────────────────
+// ── agentctl access revoke ────────────────────────────────────────────────────
 
 func newRevokeCmd() *cobra.Command {
 	var agreementID string
@@ -236,7 +240,7 @@ func newRevokeCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access list ──────────────────────────────────────────────────────
+// ── agentctl access list ──────────────────────────────────────────────────────
 
 func newListAgreementsCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -281,7 +285,7 @@ func newListAgreementsCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access resolve ───────────────────────────────────────────────────
+// ── agentctl access resolve ───────────────────────────────────────────────────
 
 func newResolveCmd() *cobra.Command {
 	var (
@@ -322,7 +326,7 @@ func newResolveCmd() *cobra.Command {
 	return cmd
 }
 
-// ── sockridge access get ───────────────────────────────────────────────────────
+// ── agentctl access get ───────────────────────────────────────────────────────
 
 func newGetAgreementCmd() *cobra.Command {
 	var agreementID string
@@ -363,6 +367,48 @@ func newGetAgreementCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&agreementID, "id", "", "Agreement ID")
+	_ = cmd.MarkFlagRequired("id")
+	return cmd
+}
+
+// ── agentctl access set-expiry ────────────────────────────────────────────────
+
+func newSetExpiryCmd() *cobra.Command {
+	var (
+		agreementID string
+		days        int
+	)
+	cmd := &cobra.Command{
+		Use:   "set-expiry",
+		Short: "Set an expiry date on an agreement",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			creds, err := keystore.LoadCredentials()
+			if err != nil || creds == nil {
+				return fmt.Errorf("not logged in")
+			}
+
+			expiresAt := time.Now().AddDate(0, 0, days)
+
+			c := newClient("")
+			resp, err := c.Access.SetAgreementExpiry(
+				context.Background(),
+				connect.NewRequest(&registryv1.SetAgreementExpiryRequest{
+					PublisherId: creds.PublisherID,
+					AgreementId: agreementID,
+					ExpiresAt:   timestamppb.New(expiresAt),
+				}),
+			)
+			if err != nil {
+				return fmt.Errorf("setting expiry: %w", err)
+			}
+			fmt.Printf("expiry set\n")
+			fmt.Printf("agreement : %s\n", resp.Msg.Agreement.Id)
+			fmt.Printf("expires   : %s\n", expiresAt.Format("2006-01-02"))
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&agreementID, "id", "", "Agreement ID")
+	cmd.Flags().IntVar(&days, "days", 30, "Number of days until expiry")
 	_ = cmd.MarkFlagRequired("id")
 	return cmd
 }

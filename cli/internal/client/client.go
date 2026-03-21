@@ -20,6 +20,7 @@ type Client struct {
 	Discovery registryv1connect.DiscoveryServiceClient
 	Access    registryv1connect.AccessAgreementServiceClient
 	Audit     registryv1connect.AuditServiceClient
+	Webhook   registryv1connect.WebhookServiceClient
 }
 
 func New(serverURL string, token string) *Client {
@@ -35,6 +36,7 @@ func New(serverURL string, token string) *Client {
 		Discovery: registryv1connect.NewDiscoveryServiceClient(httpClient, serverURL),
 		Access:    registryv1connect.NewAccessAgreementServiceClient(httpClient, serverURL, opts...),
 		Audit:     registryv1connect.NewAuditServiceClient(httpClient, serverURL, opts...),
+		Webhook:   registryv1connect.NewWebhookServiceClient(httpClient, serverURL, opts...),
 	}
 }
 

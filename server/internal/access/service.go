@@ -299,3 +299,30 @@ func (s *Service) GetAgreement(
 		Agreement: agreement,
 	}), nil
 }
+
+func (s *Service) SetAgreementExpiry(
+	ctx context.Context,
+	req *connect.Request[registryv1.SetAgreementExpiryRequest],
+) (*connect.Response[registryv1.SetAgreementExpiryResponse], error) {
+	if req.Msg.PublisherId == "" || req.Msg.AgreementId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("publisher_id and agreement_id are required"))
+	}
+
+	agreement, err := s.agreements.GetAgreement(ctx, req.Msg.AgreementId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("agreement not found"))
+	}
+
+	if agreement.RequesterId != req.Msg.PublisherId && agreement.ReceiverId != req.Msg.PublisherId {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not a party to this agreement"))
+	}
+
+	agreement.ExpiresAt = req.Msg.ExpiresAt
+	if err := s.agreements.UpdateAgreement(ctx, agreement); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("updating agreement: %w", err))
+	}
+
+	return connect.NewResponse(&registryv1.SetAgreementExpiryResponse{
+		Agreement: agreement,
+	}), nil
+}

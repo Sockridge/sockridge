@@ -20,9 +20,11 @@ import (
 	"github.com/Sockridge/sockridge/server/internal/embedder"
 	"github.com/Sockridge/sockridge/server/internal/gatekeeper"
 	"github.com/Sockridge/sockridge/server/internal/healthmon"
+	"github.com/Sockridge/sockridge/server/internal/metrics"
 	"github.com/Sockridge/sockridge/server/internal/ratelimit"
 	"github.com/Sockridge/sockridge/server/internal/registry"
 	"github.com/Sockridge/sockridge/server/internal/store"
+	"github.com/Sockridge/sockridge/server/internal/webhook"
 	"github.com/Sockridge/sockridge/server/middleware"
 )
 
@@ -91,6 +93,16 @@ func main() {
 	rateLimiter := ratelimit.New(redisStore.RedisClient())
 	logger.Info("rate limiter ready")
 
+	// ── Webhooks ──────────────────────────────────────────────────────────────
+	webhookStore := webhook.NewStore(scyllaStore.Session())
+	if err := webhookStore.CreateSchema(context.Background()); err != nil {
+		logger.Error("failed to create webhook schema", "err", err)
+		os.Exit(1)
+	}
+	webhookDispatcher := webhook.NewDispatcher(webhookStore)
+	webhookSvc := webhook.NewService(webhookStore, webhookDispatcher)
+	logger.Info("webhooks ready")
+
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := auth.New(&cfg.Auth, redisStore)
 	registrySvc := registry.New(scyllaStore, scyllaStore, redisStore, vectorStore, authSvc, embedderClient, gatekeeperSvc, rateLimiter, auditSvc)
@@ -100,6 +112,9 @@ func main() {
 	// ── Health monitor ────────────────────────────────────────────────────────
 	healthMonitor := healthmon.New(scyllaStore, redisStore)
 	healthMonitor.Start(context.Background())
+
+	// ── Agreement expiry checker ──────────────────────────────────────────────
+	access.StartExpiryChecker(scyllaStore, webhookDispatcher)
 
 	// ── Interceptors ─────────────────────────────────────────────────────────
 	interceptors := connect.WithInterceptors(
@@ -112,9 +127,11 @@ func main() {
 	mux.Handle(registryv1connect.NewDiscoveryServiceHandler(discoverySvc))
 	mux.Handle(registryv1connect.NewAccessAgreementServiceHandler(accessSvc, interceptors))
 	mux.Handle(registryv1connect.NewAuditServiceHandler(auditSvc, interceptors))
+	mux.Handle(registryv1connect.NewWebhookServiceHandler(webhookSvc, interceptors))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.Handle("/metrics", metrics.Handler(scyllaStore))
 
 	addr := fmt.Sprintf(":%d", cfg.Server.GRPCPort)
 	logger.Info("server starting", "addr", addr, "env", cfg.Server.Env)

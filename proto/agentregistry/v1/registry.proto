@@ -38,7 +38,8 @@ service AccessAgreementService {
   rpc RevokeAccess    (RevokeAccessRequest)    returns (RevokeAccessResponse);
   rpc ListAgreements  (ListAgreementsRequest)  returns (stream ListAgreementsResponse);
   rpc ResolveEndpoint (ResolveEndpointRequest) returns (ResolveEndpointResponse);
-  rpc GetAgreement    (GetAgreementRequest)    returns (GetAgreementResponse);
+  rpc GetAgreement       (GetAgreementRequest)       returns (GetAgreementResponse);
+  rpc SetAgreementExpiry (SetAgreementExpiryRequest) returns (SetAgreementExpiryResponse);
 }
 
 // ─── Auth Messages ────────────────────────────────────────────────────────────
@@ -266,4 +267,64 @@ message ListAuditEventsRequest {
 
 message ListAuditEventsResponse {
   AuditEvent event = 1;
+}
+
+// ─── Webhook Service ──────────────────────────────────────────────────────────
+
+service WebhookService {
+  rpc RegisterWebhook   (RegisterWebhookRequest)   returns (RegisterWebhookResponse);
+  rpc ListWebhooks      (ListWebhooksRequest)       returns (stream ListWebhooksResponse);
+  rpc DeleteWebhook     (DeleteWebhookRequest)      returns (DeleteWebhookResponse);
+  rpc TestWebhook       (TestWebhookRequest)        returns (TestWebhookResponse);
+}
+
+message RegisterWebhookRequest {
+  string          publisher_id = 1;
+  string          url          = 2;
+  repeated string events       = 3; // e.g. ["access_request", "agent_active", "agent_inactive"]
+}
+
+message RegisterWebhookResponse {
+  Webhook webhook = 1;
+  string  secret  = 2; // signing secret — show once, not stored in plaintext
+}
+
+message ListWebhooksRequest {
+  string publisher_id = 1;
+}
+
+message ListWebhooksResponse {
+  Webhook webhook = 1;
+}
+
+message DeleteWebhookRequest {
+  string publisher_id = 1;
+  string webhook_id   = 2;
+}
+
+message DeleteWebhookResponse {
+  bool deleted = 1;
+}
+
+message TestWebhookRequest {
+  string publisher_id = 1;
+  string webhook_id   = 2;
+}
+
+message TestWebhookResponse {
+  bool   success      = 1;
+  int32  status_code  = 2;
+  string error        = 3;
+}
+
+// ── Agreement expiry RPC ──────────────────────────────────────────────────────
+
+message SetAgreementExpiryRequest {
+  string publisher_id = 1;
+  string agreement_id = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message SetAgreementExpiryResponse {
+  AccessAgreement agreement = 1;
 }

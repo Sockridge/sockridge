@@ -27,6 +27,9 @@ type Rule struct {
 // Allow returns true if the request is allowed, false if rate limited.
 // Uses Redis sorted sets for sliding window.
 func (l *Limiter) Allow(ctx context.Context, rule Rule) (bool, error) {
+	if l == nil || l.redis == nil {
+		return true, nil // fail open
+	}
 	now := time.Now()
 	windowStart := now.Add(-rule.Window).UnixMilli()
 	key := fmt.Sprintf("rl:%s", rule.Key)
