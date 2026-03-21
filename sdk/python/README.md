@@ -5,10 +5,16 @@ Python SDK for the [Sockridge](https://sockridge.com) agent registry.
 ## Install
 
 ```bash
-pip install git+https://github.com/Sockridge/sockridge.git#subdirectory=sdk/python
+pip install sockridge
 ```
 
-Or for local development:
+Or pin to a specific version:
+
+```bash
+pip install sockridge==0.1.0
+```
+
+For local development:
 
 ```bash
 git clone https://github.com/Sockridge/sockridge.git
@@ -24,12 +30,12 @@ You need a publisher account before using the SDK. Set one up with the CLI:
 go install github.com/Sockridge/sockridge/cli@latest
 
 # register
-sockridge auth keygen
-sockridge auth register --handle yourhandle --server https://sockridge.com:9000
-sockridge auth login --server https://sockridge.com:9000
+agentctl auth keygen
+agentctl auth register --handle yourhandle --server http://sockridge.com:9000
+agentctl auth login --server http://sockridge.com:9000
 ```
 
-This creates `~/.sockridge/credentials.json` and `~/.sockridge/ed25519.key` which the SDK reads automatically.
+This creates `~/.agentctl/credentials.json` and `~/.agentctl/ed25519.key` which the SDK reads automatically.
 
 ---
 
@@ -40,8 +46,8 @@ This creates `~/.sockridge/credentials.json` and `~/.sockridge/ed25519.key` whic
 ```python
 from sockridge import Registry
 
-registry = Registry("https://sockridge.com:9000")
-registry.login()  # reads ~/.sockridge/credentials.json
+registry = Registry("http://sockridge.com:9000")
+registry.login()  # reads ~/.agentctl/credentials.json
 ```
 
 Custom credentials path:
@@ -60,7 +66,7 @@ registry.login(
 ```python
 from sockridge import Registry, AgentCard, Skill, Capabilities
 
-registry = Registry("https://sockridge.com:9000")
+registry = Registry("http://sockridge.com:9000")
 registry.login()
 
 card = AgentCard(
@@ -98,7 +104,7 @@ The agent goes through automatic validation after publish:
 For agents that register themselves when they start:
 
 ```python
-registry = Registry("https://sockridge.com:9000")
+registry = Registry("http://sockridge.com:9000")
 published = registry.register_and_publish(card)
 print(f"registered: {published.id}")
 ```

@@ -29,6 +29,8 @@ git clone https://github.com/Sockridge/sockridge.git
 cd sockridge
 
 # set env vars
+export AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY=gsk_...
+or
 export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
 
 # generate proto (requires buf + Go)

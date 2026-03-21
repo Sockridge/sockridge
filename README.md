@@ -2,7 +2,7 @@
 
 **Agent discovery infrastructure.** Publish your AI agent once. Any other agent can find it, request access, and connect — without you lifting a finger.
 
-→ [sockridge.com](https://sockridge.com) · [API Status](https://sockridge.com:9000/healthz)
+→ [sockridge.com](https://sockridge.com) · [API Status](http://sockridge.com:9000/healthz)
 
 ---
 
@@ -31,22 +31,43 @@ Registry never sees that call
 
 **1. Install the CLI:**
 
+**macOS / Linux:**
+
 ```bash
-go install github.com/Sockridge/sockridge/cli@latest
+curl -fsSL https://sockridge.com/install.sh | sh
 ```
+
+**Manual download (all platforms):**
+
+| Platform            | Download                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| macOS Apple Silicon | [sockridge-macos-arm64](https://github.com/Sockridge/sockridge/releases/latest/download/sockridge-macos-arm64)             |
+| macOS Intel         | [sockridge-macos-amd64](https://github.com/Sockridge/sockridge/releases/latest/download/sockridge-macos-amd64)             |
+| Linux x86_64        | [sockridge-linux-amd64](https://github.com/Sockridge/sockridge/releases/latest/download/sockridge-linux-amd64)             |
+| Linux ARM64         | [sockridge-linux-arm64](https://github.com/Sockridge/sockridge/releases/latest/download/sockridge-linux-arm64)             |
+| Windows x64         | [sockridge-windows-amd64.exe](https://github.com/Sockridge/sockridge/releases/latest/download/sockridge-windows-amd64.exe) |
+
+After downloading on macOS/Linux:
+
+```bash
+chmod +x sockridge-macos-arm64
+sudo mv sockridge-macos-arm64 /usr/local/bin/sockridge
+```
+
+After downloading on Windows — rename to `sockridge.exe` and add to your PATH.
 
 **2. Register:**
 
 ```bash
-sockridge auth keygen
-sockridge auth register --handle yourhandle --server https://sockridge.com:9000
-sockridge auth login --server https://sockridge.com:9000
+agentctl auth keygen
+agentctl auth register --handle yourhandle --server http://sockridge.com:9000
+agentctl auth login --server http://sockridge.com:9000
 ```
 
 **3. Publish your agent:**
 
 ```bash
-sockridge publish --file agent.json
+agentctl publish --file agent.json
 ```
 
 Example `agent.json`:
@@ -75,19 +96,19 @@ Example `agent.json`:
 **4. Search:**
 
 ```bash
-sockridge search list
-sockridge search semantic "find a lab analyzer"
-sockridge search get <agent-id>
+agentctl search list
+agentctl search semantic "find a lab analyzer"
+agentctl search get <agent-id>
 ```
 
 **5. Request access to another agent:**
 
 ```bash
-sockridge access request --to <publisher-id> --message "building a pipeline together"
+agentctl access request --to <publisher-id> --message "building a pipeline together"
 # other side approves:
-sockridge access approve --id <agreement-id>
+agentctl access approve --id <agreement-id>
 # shared key printed — use it to resolve endpoints
-sockridge access resolve --agent <agent-id> --key sk_...
+agentctl access resolve --agent <agent-id> --key sk_...
 ```
 
 ## SDKs
@@ -104,7 +125,7 @@ See `sdk/python/README.md` for Python SDK docs.
 
 ```bash
 git clone https://github.com/Sockridge/sockridge.git
-cd sockridge
+cd SocialAgents
 export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
 docker compose up -d --build
 ```
