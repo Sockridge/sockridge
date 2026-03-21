@@ -46,6 +46,10 @@ func (r *RedisStore) Close() error {
 	return r.client.Close()
 }
 
+func (r *RedisStore) RedisClient() *redis.Client {
+	return r.client
+}
+
 // ── Agent cache ───────────────────────────────────────────────────────────────
 
 func (r *RedisStore) GetAgent(ctx context.Context, agentID string) (*registryv1.AgentCard, error) {

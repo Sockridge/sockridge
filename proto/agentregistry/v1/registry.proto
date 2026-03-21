@@ -241,3 +241,29 @@ message GetAgreementRequest {
 message GetAgreementResponse {
   AccessAgreement agreement = 1;
 }
+
+// ─── Audit Log Service ────────────────────────────────────────────────────────
+
+service AuditService {
+  rpc ListEvents (ListAuditEventsRequest) returns (stream ListAuditEventsResponse);
+}
+
+message AuditEvent {
+  string                    id           = 1;
+  string                    publisher_id = 2;
+  string                    action       = 3; // publish | update | deprecate | login | access_request | access_approve | access_revoke | resolve
+  string                    agent_id     = 4; // if applicable
+  string                    target_id    = 5; // agreement_id or other target
+  string                    ip           = 6;
+  string                    detail       = 7; // human-readable detail
+  google.protobuf.Timestamp occurred_at  = 8;
+}
+
+message ListAuditEventsRequest {
+  string publisher_id = 1;
+  uint32 limit        = 2;
+}
+
+message ListAuditEventsResponse {
+  AuditEvent event = 1;
+}

@@ -13,24 +13,28 @@ import (
 
 	"github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1/registryv1connect"
 	"github.com/Sockridge/sockridge/server/internal/access"
+	"github.com/Sockridge/sockridge/server/internal/audit"
 	"github.com/Sockridge/sockridge/server/internal/auth"
 	"github.com/Sockridge/sockridge/server/internal/config"
 	"github.com/Sockridge/sockridge/server/internal/discovery"
 	"github.com/Sockridge/sockridge/server/internal/embedder"
 	"github.com/Sockridge/sockridge/server/internal/gatekeeper"
+	"github.com/Sockridge/sockridge/server/internal/healthmon"
+	"github.com/Sockridge/sockridge/server/internal/ratelimit"
 	"github.com/Sockridge/sockridge/server/internal/registry"
 	"github.com/Sockridge/sockridge/server/internal/store"
 	"github.com/Sockridge/sockridge/server/middleware"
 )
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
- 
+
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("failed to load config", "err", err)
 		os.Exit(1)
 	}
- 
+
 	// ── Storage ───────────────────────────────────────────────────────────────
 	scyllaStore, err := store.NewScyllaStore(cfg.Scylla)
 	if err != nil {
@@ -38,30 +42,30 @@ func main() {
 		os.Exit(1)
 	}
 	defer scyllaStore.Close()
- 
+
 	if err := scyllaStore.CreateSchema(context.Background(), cfg.Scylla.Keyspace); err != nil {
 		logger.Error("failed to create scylla schema", "err", err)
 		os.Exit(1)
 	}
- 
+
 	redisStore, err := store.NewRedisStore(cfg.Redis)
 	if err != nil {
 		logger.Error("failed to connect to redis", "err", err)
 		os.Exit(1)
 	}
 	defer redisStore.Close()
- 
+
 	vectorStore, err := store.NewVectorStore(cfg.Postgres)
 	if err != nil {
 		logger.Error("failed to connect to postgres/pgvector", "err", err)
 		os.Exit(1)
 	}
 	defer vectorStore.Close()
- 
+
 	// ── Embedder ──────────────────────────────────────────────────────────────
 	embedderClient := embedder.New(cfg.Embedder.URL)
 	logger.Info("embedder configured", "url", cfg.Embedder.URL)
- 
+
 	// ── Gatekeeper ────────────────────────────────────────────────────────────
 	var gatekeeperSvc *gatekeeper.Service
 	if cfg.Gatekeeper.AnthropicKey != "" || cfg.Gatekeeper.GroqKey != "" {
@@ -74,30 +78,47 @@ func main() {
 	} else {
 		logger.Info("gatekeeper running without AI scoring (set AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY or AGENTREGISTRY_GATEKEEPER_GROQ_KEY)")
 	}
- 
+
+	// ── Audit log ─────────────────────────────────────────────────────────────
+	auditSvc := audit.New(scyllaStore.Session())
+	if err := auditSvc.CreateSchema(context.Background()); err != nil {
+		logger.Error("failed to create audit schema", "err", err)
+		os.Exit(1)
+	}
+	logger.Info("audit log ready")
+
+	// ── Rate limiter ──────────────────────────────────────────────────────────
+	rateLimiter := ratelimit.New(redisStore.RedisClient())
+	logger.Info("rate limiter ready")
+
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := auth.New(&cfg.Auth, redisStore)
-	registrySvc := registry.New(scyllaStore, scyllaStore, redisStore, vectorStore, authSvc, embedderClient, gatekeeperSvc)
+	registrySvc := registry.New(scyllaStore, scyllaStore, redisStore, vectorStore, authSvc, embedderClient, gatekeeperSvc, rateLimiter, auditSvc)
 	discoverySvc := discovery.New(scyllaStore, redisStore, vectorStore, embedderClient)
 	accessSvc := access.New(scyllaStore, scyllaStore, scyllaStore)
- 
+
+	// ── Health monitor ────────────────────────────────────────────────────────
+	healthMonitor := healthmon.New(scyllaStore, redisStore)
+	healthMonitor.Start(context.Background())
+
 	// ── Interceptors ─────────────────────────────────────────────────────────
 	interceptors := connect.WithInterceptors(
 		middleware.NewAuthInterceptor(authSvc),
 	)
- 
+
 	// ── Routes ───────────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
 	mux.Handle(registryv1connect.NewRegistryServiceHandler(registrySvc, interceptors))
 	mux.Handle(registryv1connect.NewDiscoveryServiceHandler(discoverySvc))
 	mux.Handle(registryv1connect.NewAccessAgreementServiceHandler(accessSvc, interceptors))
+	mux.Handle(registryv1connect.NewAuditServiceHandler(auditSvc, interceptors))
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
- 
+
 	addr := fmt.Sprintf(":%d", cfg.Server.GRPCPort)
 	logger.Info("server starting", "addr", addr, "env", cfg.Server.Env)
- 
+
 	if err := http.ListenAndServe(addr, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 		logger.Error("server exited", "err", err)
 		os.Exit(1)

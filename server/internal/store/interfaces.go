@@ -8,6 +8,7 @@ import (
 
 // AgentStore — backed by ScyllaDB
 type AgentStore interface {
+	ListAll(ctx context.Context) ([]*registryv1.AgentCard, error)
 	Save(ctx context.Context, agent *registryv1.AgentCard) error
 	Get(ctx context.Context, agentID string) (*registryv1.AgentCard, error)
 	Update(ctx context.Context, agent *registryv1.AgentCard) error

@@ -56,6 +56,10 @@ func NewScyllaStore(cfg config.ScyllaConfig) (*ScyllaStore, error) {
 	return &ScyllaStore{session: session}, nil
 }
 
+func (s *ScyllaStore) Session() *gocql.Session {
+	return s.session
+}
+
 func (s *ScyllaStore) Close() {
 	s.session.Close()
 }
@@ -299,4 +303,23 @@ func (s *ScyllaStore) GetPublisherByHandle(ctx context.Context, handle string) (
 		return nil, fmt.Errorf("looking up handle: %w", err)
 	}
 	return s.GetPublisherByID(ctx, publisherID)
+}
+
+func (s *ScyllaStore) ListAll(ctx context.Context) ([]*registryv1.AgentCard, error) {
+	iter := s.session.Query(`SELECT data FROM agents`).WithContext(ctx).Iter()
+
+	var agents []*registryv1.AgentCard
+	var data []byte
+	for iter.Scan(&data) {
+		var agent registryv1.AgentCard
+		if err := proto.Unmarshal(data, &agent); err != nil {
+			continue
+		}
+		agents = append(agents, &agent)
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, fmt.Errorf("listing all agents: %w", err)
+	}
+	return agents, nil
 }

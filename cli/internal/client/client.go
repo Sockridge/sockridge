@@ -14,28 +14,29 @@ import (
 )
 
 const DefaultServerURL = "http://localhost:9000"
-
+ 
 type Client struct {
 	Registry  registryv1connect.RegistryServiceClient
 	Discovery registryv1connect.DiscoveryServiceClient
 	Access    registryv1connect.AccessAgreementServiceClient
+	Audit     registryv1connect.AuditServiceClient
 }
-
+ 
 func New(serverURL string, token string) *Client {
 	httpClient := newHTTPClient(serverURL)
-
+ 
 	opts := []connect.ClientOption{}
 	if token != "" {
 		opts = append(opts, connect.WithInterceptors(bearerInterceptor(token)))
 	}
-
+ 
 	return &Client{
 		Registry:  registryv1connect.NewRegistryServiceClient(httpClient, serverURL, opts...),
 		Discovery: registryv1connect.NewDiscoveryServiceClient(httpClient, serverURL),
 		Access:    registryv1connect.NewAccessAgreementServiceClient(httpClient, serverURL, opts...),
 	}
 }
-
+ 
 func newHTTPClient(serverURL string) *http.Client {
 	if strings.HasPrefix(serverURL, "https://") {
 		// real TLS — standard HTTP/2 over TLS
@@ -45,7 +46,7 @@ func newHTTPClient(serverURL string) *http.Client {
 			},
 		}
 	}
-
+ 
 	// plain h2c — HTTP/2 over cleartext (no TLS)
 	return &http.Client{
 		Transport: &http2.Transport{
@@ -56,7 +57,7 @@ func newHTTPClient(serverURL string) *http.Client {
 		},
 	}
 }
-
+ 
 func bearerInterceptor(token string) connect.UnaryInterceptorFunc {
 	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {

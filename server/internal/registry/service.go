@@ -14,9 +14,11 @@ import (
 
 	registryv1 "github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1"
 	"github.com/Sockridge/sockridge/server/gen/go/agentregistry/v1/registryv1connect"
+	"github.com/Sockridge/sockridge/server/internal/audit"
 	"github.com/Sockridge/sockridge/server/internal/auth"
 	"github.com/Sockridge/sockridge/server/internal/embedder"
 	"github.com/Sockridge/sockridge/server/internal/gatekeeper"
+	"github.com/Sockridge/sockridge/server/internal/ratelimit"
 	"github.com/Sockridge/sockridge/server/internal/store"
 	"github.com/Sockridge/sockridge/server/middleware"
 )
@@ -29,6 +31,8 @@ type Service struct {
 	auth        *auth.Service
 	embedder    *embedder.Client
 	gatekeeper  *gatekeeper.Service
+	rateLimiter *ratelimit.Limiter
+	audit       *audit.Service
 }
 
 func New(
@@ -39,15 +43,19 @@ func New(
 	authSvc *auth.Service,
 	embedderClient *embedder.Client,
 	gateKeeperSvc *gatekeeper.Service,
+	rateLimiter *ratelimit.Limiter,
+	auditSvc *audit.Service,
 ) *Service {
 	return &Service{
-		agents:     agents,
-		publishers: publishers,
-		cache:      cache,
-		vectors:    vectors,
-		auth:       authSvc,
-		embedder:   embedderClient,
-		gatekeeper: gateKeeperSvc,
+		agents:      agents,
+		publishers:  publishers,
+		cache:       cache,
+		vectors:     vectors,
+		auth:        authSvc,
+		embedder:    embedderClient,
+		gatekeeper:  gateKeeperSvc,
+		rateLimiter: rateLimiter,
+		audit:       auditSvc,
 	}
 }
 
@@ -160,6 +168,16 @@ func (s *Service) PublishAgent(
 
 	// run gatekeeper async — updates status to ACTIVE or REJECTED
 	go s.runGatekeeper(agent)
+
+	// audit log
+	if s.audit != nil {
+		ip := req.Header().Get("X-Real-IP")
+		if ip == "" {
+			ip = req.Header().Get("X-Forwarded-For")
+		}
+		s.audit.Log(ctx, agent.PublisherId, audit.ActionPublish, agent.Id, "", ip,
+			fmt.Sprintf("published agent %q v%s", agent.Name, agent.Version))
+	}
 
 	return connect.NewResponse(&registryv1.PublishAgentResponse{
 		AgentId: agent.Id,

@@ -4,8 +4,8 @@ go 1.26.1
 
 require (
 	connectrpc.com/connect v1.19.1
-	github.com/spf13/cobra v1.10.2
 	github.com/Sockridge/sockridge/server v0.0.0-00010101000000-000000000000
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/net v0.52.0
 	google.golang.org/protobuf v1.36.11
 )
