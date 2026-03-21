@@ -116,6 +116,12 @@ func Ping(ctx context.Context, agentURL string, submittedName string, submittedS
 		}
 	}
 
+	// url in remote card must match the submitted url
+	if card.URL != "" && !strings.EqualFold(strings.TrimRight(card.URL, "/"), strings.TrimRight(agentURL, "/")) {
+		mismatches = append(mismatches,
+			fmt.Sprintf("url in /.well-known/agent.json (%q) does not match submitted url (%q)", card.URL, agentURL))
+	}
+
 	if len(mismatches) > 0 {
 		result.A2AError = "card mismatch: " + strings.Join(mismatches, "; ")
 		return result

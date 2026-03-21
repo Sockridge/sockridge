@@ -52,14 +52,17 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 			return result, nil
 		}
 
-		// A2A compliance adds to confidence — non-compliant agents get penalized
+		// A2A compliance check — card mismatch is a hard reject
 		if !pingResult.A2ACompliant {
+			// not compliant — warn but let AI scorer decide
 			fmt.Printf("[INFO] agent %s is reachable but not A2A compliant: %s\n", agent.Id, pingResult.A2AError)
-			// don't reject outright — let AI scorer decide with lower base score
-			result.Reason = fmt.Sprintf("reachable but not A2A compliant: %s", pingResult.A2AError)
 		} else if !pingResult.A2AMatchesCard {
-			fmt.Printf("[INFO] agent %s A2A card mismatch: %s\n", agent.Id, pingResult.A2AError)
-			result.Reason = fmt.Sprintf("A2A card mismatch: %s", pingResult.A2AError)
+			// card mismatch — hard reject, don't proceed to AI scoring
+			fmt.Printf("[WARN] agent %s A2A card mismatch — rejecting: %s\n", agent.Id, pingResult.A2AError)
+			result.Approved = false
+			result.ConfidenceScore = 0.0
+			result.Reason = fmt.Sprintf("rejected: submitted card does not match /.well-known/agent.json — %s", pingResult.A2AError)
+			return result, nil
 		} else {
 			fmt.Printf("[INFO] agent %s passed A2A compliance check\n", agent.Id)
 		}
