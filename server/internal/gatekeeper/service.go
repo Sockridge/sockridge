@@ -13,11 +13,12 @@ import (
 // Service runs the full validation pipeline on a published AgentCard.
 // Pipeline: validate → ping → score → update agent status
 type Service struct {
-	groqKey string
+	anthropicKey string
+	groqKey      string
 }
 
-func New(groqKey string) *Service {
-	return &Service{groqKey: groqKey}
+func New(anthropicKey, groqKey string) *Service {
+	return &Service{anthropicKey: anthropicKey, groqKey: groqKey}
 }
 
 // Evaluate runs the full gatekeeper pipeline and returns the result.
@@ -50,13 +51,13 @@ func (s *Service) Evaluate(ctx context.Context, agent *registryv1.AgentCard) (*r
 	}
 
 	// step 3: AI scoring
-	if s.groqKey != "" {
+	if s.anthropicKey != "" {
 		cardJSON, err := agentCardToJSON(agent)
 		if err != nil {
 			return nil, fmt.Errorf("serializing card for scoring: %w", err)
 		}
 
-		scoreResult, err := Score(ctx, cardJSON, s.groqKey)
+		scoreResult, err := Score(ctx, cardJSON, s.anthropicKey, s.groqKey)
 		if err != nil {
 			// scoring failed — approve with low confidence rather than blocking
 			result.Approved = true

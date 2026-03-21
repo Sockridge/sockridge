@@ -46,7 +46,8 @@ type EmbedderConfig struct {
 }
 
 type GatekeeperConfig struct {
-	GroqKey string `mapstructure:"groq_key"`
+	AnthropicKey string `mapstructure:"anthropic_key"`
+	GroqKey      string `mapstructure:"groq_key"`
 }
 
 type AuthConfig struct {
@@ -103,6 +104,9 @@ func Load() (*Config, error) {
 	}
 	if url := os.Getenv("AGENTREGISTRY_EMBEDDER_URL"); url != "" {
 		cfg.Embedder.URL = url
+	}
+	if key := os.Getenv("AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY"); key != "" {
+		cfg.Gatekeeper.AnthropicKey = key
 	}
 	if key := os.Getenv("AGENTREGISTRY_GATEKEEPER_GROQ_KEY"); key != "" {
 		cfg.Gatekeeper.GroqKey = key

@@ -16,6 +16,7 @@ services:
       AGENTREGISTRY_POSTGRES_DSN: postgres://agentregistry:secret@postgres:5432/agentregistry?sslmode=disable
       AGENTREGISTRY_AUTH_JWT_SECRET: dev-secret-change-in-prod
       AGENTREGISTRY_EMBEDDER_URL: http://embedder:8000
+      AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY: ${AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY:-}
       AGENTREGISTRY_GATEKEEPER_GROQ_KEY: ${AGENTREGISTRY_GATEKEEPER_GROQ_KEY:-}
     depends_on:
       scylla:

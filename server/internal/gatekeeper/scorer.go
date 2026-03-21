@@ -31,9 +31,104 @@ Respond ONLY with valid JSON in this exact format:
 
 Do not include any other text, markdown, or explanation outside the JSON.`
 
+type ScoreResult struct {
+	Approved        bool    `json:"approved"`
+	ConfidenceScore float32 `json:"confidence_score"`
+	Reason          string  `json:"reason"`
+}
+
+// Score evaluates an AgentCard using Anthropic first, Groq as fallback.
+func Score(ctx context.Context, card string, anthropicKey string, groqKey string) (ScoreResult, error) {
+	if anthropicKey != "" {
+		result, err := scoreWithAnthropic(ctx, card, anthropicKey)
+		if err == nil {
+			return result, nil
+		}
+		fmt.Printf("[WARN] Anthropic scoring failed, falling back to Groq: %v\n", err)
+	}
+
+	if groqKey != "" {
+		return scoreWithGroq(ctx, card, groqKey)
+	}
+
+	return ScoreResult{}, fmt.Errorf("no scoring API key configured")
+}
+
+// ── Anthropic ─────────────────────────────────────────────────────────────────
+
+type anthropicRequest struct {
+	Model     string         `json:"model"`
+	MaxTokens int            `json:"max_tokens"`
+	System    string         `json:"system"`
+	Messages  []anthropicMsg `json:"messages"`
+}
+
+type anthropicMsg struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type anthropicResponse struct {
+	Content []struct {
+		Text string `json:"text"`
+	} `json:"content"`
+}
+
+func scoreWithAnthropic(ctx context.Context, card string, apiKey string) (ScoreResult, error) {
+	payload := anthropicRequest{
+		Model:     "claude-haiku-4-5-20251001",
+		MaxTokens: 256,
+		System:    scorerPrompt,
+		Messages: []anthropicMsg{
+			{Role: "user", Content: fmt.Sprintf("Evaluate this AgentCard:\n\n%s", card)},
+		},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return ScoreResult{}, fmt.Errorf("marshaling request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		"https://api.anthropic.com/v1/messages",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return ScoreResult{}, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ScoreResult{}, fmt.Errorf("calling anthropic: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ScoreResult{}, fmt.Errorf("anthropic returned status %d", resp.StatusCode)
+	}
+
+	var ar anthropicResponse
+	if err := json.NewDecoder(resp.Body).Decode(&ar); err != nil {
+		return ScoreResult{}, fmt.Errorf("decoding response: %w", err)
+	}
+
+	if len(ar.Content) == 0 {
+		return ScoreResult{}, fmt.Errorf("empty response from anthropic")
+	}
+
+	return parseScoreResult(ar.Content[0].Text)
+}
+
+// ── Groq ──────────────────────────────────────────────────────────────────────
+
 type groqRequest struct {
-	Model    string      `json:"model"`
-	Messages []groqMsg   `json:"messages"`
+	Model    string    `json:"model"`
+	Messages []groqMsg `json:"messages"`
 }
 
 type groqMsg struct {
@@ -49,14 +144,7 @@ type groqResponse struct {
 	} `json:"choices"`
 }
 
-type ScoreResult struct {
-	Approved        bool    `json:"approved"`
-	ConfidenceScore float32 `json:"confidence_score"`
-	Reason          string  `json:"reason"`
-}
-
-// Score calls Groq to evaluate the AgentCard quality.
-func Score(ctx context.Context, card string, apiKey string) (ScoreResult, error) {
+func scoreWithGroq(ctx context.Context, card string, apiKey string) (ScoreResult, error) {
 	payload := groqRequest{
 		Model: "llama-3.1-8b-instant",
 		Messages: []groqMsg{
@@ -75,7 +163,7 @@ func Score(ctx context.Context, card string, apiKey string) (ScoreResult, error)
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return ScoreResult{}, fmt.Errorf("creating request: %w", err)
+		return ScoreResult{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -92,18 +180,22 @@ func Score(ctx context.Context, card string, apiKey string) (ScoreResult, error)
 		return ScoreResult{}, fmt.Errorf("groq returned status %d", resp.StatusCode)
 	}
 
-	var groqResp groqResponse
-	if err := json.NewDecoder(resp.Body).Decode(&groqResp); err != nil {
+	var gr groqResponse
+	if err := json.NewDecoder(resp.Body).Decode(&gr); err != nil {
 		return ScoreResult{}, fmt.Errorf("decoding response: %w", err)
 	}
 
-	if len(groqResp.Choices) == 0 {
+	if len(gr.Choices) == 0 {
 		return ScoreResult{}, fmt.Errorf("empty response from groq")
 	}
 
-	text := strings.TrimSpace(groqResp.Choices[0].Message.Content)
+	return parseScoreResult(gr.Choices[0].Message.Content)
+}
 
-	// strip markdown code fences if model wraps in ```json
+// ── shared parser ─────────────────────────────────────────────────────────────
+
+func parseScoreResult(text string) (ScoreResult, error) {
+	text = strings.TrimSpace(text)
 	text = strings.TrimPrefix(text, "```json")
 	text = strings.TrimPrefix(text, "```")
 	text = strings.TrimSuffix(text, "```")
@@ -113,6 +205,5 @@ func Score(ctx context.Context, card string, apiKey string) (ScoreResult, error)
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
 		return ScoreResult{}, fmt.Errorf("parsing score result: %w\nraw: %s", err, text)
 	}
-
 	return result, nil
 }

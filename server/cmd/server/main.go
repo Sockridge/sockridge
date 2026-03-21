@@ -22,16 +22,15 @@ import (
 	"github.com/Sockridge/sockridge/server/internal/store"
 	"github.com/Sockridge/sockridge/server/middleware"
 )
-
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
+ 
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("failed to load config", "err", err)
 		os.Exit(1)
 	}
-
+ 
 	// ── Storage ───────────────────────────────────────────────────────────────
 	scyllaStore, err := store.NewScyllaStore(cfg.Scylla)
 	if err != nil {
@@ -39,50 +38,54 @@ func main() {
 		os.Exit(1)
 	}
 	defer scyllaStore.Close()
-
+ 
 	if err := scyllaStore.CreateSchema(context.Background(), cfg.Scylla.Keyspace); err != nil {
 		logger.Error("failed to create scylla schema", "err", err)
 		os.Exit(1)
 	}
-
+ 
 	redisStore, err := store.NewRedisStore(cfg.Redis)
 	if err != nil {
 		logger.Error("failed to connect to redis", "err", err)
 		os.Exit(1)
 	}
 	defer redisStore.Close()
-
+ 
 	vectorStore, err := store.NewVectorStore(cfg.Postgres)
 	if err != nil {
 		logger.Error("failed to connect to postgres/pgvector", "err", err)
 		os.Exit(1)
 	}
 	defer vectorStore.Close()
-
+ 
 	// ── Embedder ──────────────────────────────────────────────────────────────
 	embedderClient := embedder.New(cfg.Embedder.URL)
 	logger.Info("embedder configured", "url", cfg.Embedder.URL)
-
+ 
 	// ── Gatekeeper ────────────────────────────────────────────────────────────
 	var gatekeeperSvc *gatekeeper.Service
-	if cfg.Gatekeeper.GroqKey != "" {
-		gatekeeperSvc = gatekeeper.New(cfg.Gatekeeper.GroqKey)
-		logger.Info("gatekeeper configured with AI scoring")
+	if cfg.Gatekeeper.AnthropicKey != "" || cfg.Gatekeeper.GroqKey != "" {
+		gatekeeperSvc = gatekeeper.New(cfg.Gatekeeper.AnthropicKey, cfg.Gatekeeper.GroqKey)
+		if cfg.Gatekeeper.AnthropicKey != "" {
+			logger.Info("gatekeeper configured with Anthropic scoring (Groq as fallback)")
+		} else {
+			logger.Info("gatekeeper configured with Groq scoring")
+		}
 	} else {
-		logger.Info("gatekeeper running without AI scoring (set AGENTREGISTRY_GATEKEEPER_GROQ_KEY to enable)")
+		logger.Info("gatekeeper running without AI scoring (set AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY or AGENTREGISTRY_GATEKEEPER_GROQ_KEY)")
 	}
-
+ 
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := auth.New(&cfg.Auth, redisStore)
 	registrySvc := registry.New(scyllaStore, scyllaStore, redisStore, vectorStore, authSvc, embedderClient, gatekeeperSvc)
 	discoverySvc := discovery.New(scyllaStore, redisStore, vectorStore, embedderClient)
 	accessSvc := access.New(scyllaStore, scyllaStore, scyllaStore)
-
+ 
 	// ── Interceptors ─────────────────────────────────────────────────────────
 	interceptors := connect.WithInterceptors(
 		middleware.NewAuthInterceptor(authSvc),
 	)
-
+ 
 	// ── Routes ───────────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
 	mux.Handle(registryv1connect.NewRegistryServiceHandler(registrySvc, interceptors))
@@ -91,10 +94,10 @@ func main() {
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-
+ 
 	addr := fmt.Sprintf(":%d", cfg.Server.GRPCPort)
 	logger.Info("server starting", "addr", addr, "env", cfg.Server.Env)
-
+ 
 	if err := http.ListenAndServe(addr, h2c.NewHandler(mux, &http2.Server{})); err != nil {
 		logger.Error("server exited", "err", err)
 		os.Exit(1)
