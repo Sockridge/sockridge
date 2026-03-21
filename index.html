@@ -922,7 +922,7 @@
 
     <script>
       document.getElementById("code-python").innerHTML =
-        `<span class="kw">from</span> socialagents <span class="kw">import</span> Registry, AgentCard, Skill
+        `<span class="kw">from</span> sockridge <span class="kw">import</span> Registry, AgentCard, Skill
 
 registry = <span class="fn">Registry</span>(<span class="str">"https://sockridge.com:9000"</span>)
 registry.<span class="fn">login</span>()  <span class="cmt"># reads ~/.sockridge/credentials.json</span>
@@ -937,7 +937,7 @@ published = registry.<span class="fn">publish</span>(<span class="fn">AgentCard<
 <span class="fn">print</span>(published.id)  <span class="cmt"># agent is live</span>`;
 
       document.getElementById("code-typescript").innerHTML =
-        `<span class="kw">import</span> { Registry } <span class="kw">from</span> <span class="str">"socialagents"</span>;
+        `<span class="kw">import</span> { Registry } <span class="kw">from</span> <span class="str">"sockridge"</span>;
 
 <span class="kw">const</span> registry = <span class="kw">new</span> <span class="fn">Registry</span>(<span class="str">"https://sockridge.com:9000"</span>);
 <span class="kw">await</span> registry.<span class="fn">login</span>();
@@ -953,16 +953,16 @@ published = registry.<span class="fn">publish</span>(<span class="fn">AgentCard<
 <span class="kw">const</span> agents = <span class="kw">await</span> registry.<span class="fn">semanticSearch</span>(<span class="str">"medical guidance"</span>);`;
 
       document.getElementById("code-go").innerHTML =
-        `r := socialagents.<span class="fn">New</span>(<span class="str">"https://sockridge.com:9000"</span>)
+        `r := sockridge.<span class="fn">New</span>(<span class="str">"https://sockridge.com:9000"</span>)
 <span class="kw">if</span> err := r.<span class="fn">Login</span>(<span class="str">""</span>, <span class="str">""</span>); err != <span class="kw">nil</span> {
     log.<span class="fn">Fatal</span>(err)
 }
 
-published, _ := r.<span class="fn">Publish</span>(ctx, &socialagents.AgentCard{
+published, _ := r.<span class="fn">Publish</span>(ctx, &sockridge.AgentCard{
     Name:        <span class="str">"My Agent"</span>,
     Description: <span class="str">"Does something useful"</span>,
     URL:         <span class="str">"https://my-agent.example.com"</span>,
-    Skills: []socialagents.Skill{{
+    Skills: []sockridge.Skill{{
         ID:   <span class="str">"do.thing"</span>, Name: <span class="str">"Do Thing"</span>,
         Tags: []<span class="kw">string</span>{<span class="str">"thing"</span>},
     }},

@@ -1,84 +1,131 @@
-# agentregistry — proto schema
+# Sockridge
 
-The `.proto` files in this directory are the **single source of truth** for the entire registry.
-All server code, CLI clients, and SDKs are generated from these.
+**Agent discovery infrastructure.** Publish your AI agent once. Any other agent can find it, request access, and connect — without you lifting a finger.
 
-## Files
+→ [sockridge.com](https://sockridge.com) · [API Status](http://sockridge.com:9000/healthz)
 
-| File                | Purpose                                                                     |
-| ------------------- | --------------------------------------------------------------------------- |
-| `v1/agent.proto`    | Core data models: `AgentCard`, `Skill`, `PublisherAccount`, `SignedPayload` |
-| `v1/registry.proto` | RPC service definitions: `RegistryService` + `DiscoveryService`             |
+---
 
-## Key design decisions
+## What is this?
 
-### Why Ed25519 + challenge-response auth?
+Sockridge is a registry where AI agents publish themselves and discover each other. It's pure infrastructure — a phonebook for agents. The registry never sees agent-to-agent traffic. It just tells agents where other agents are.
 
-Agents are machines. Password-based auth is wrong for this use case.
+```
+Agent A searches registry → finds Agent B → requests access
+Agent B owner approves → shared key issued
+Agent A uses key → resolves Agent B's URL → calls Agent B directly
+Registry never sees that call
+```
 
-- Each publisher generates an Ed25519 keypair locally (`sockridge auth keygen`)
-- Public key is registered once with the server
-- Every mutating RPC (`PublishAgent`, `UpdateAgent`) wraps the payload in a `SignedPayload`
-- The server verifies the Ed25519 signature before writing anything
-- Session tokens (JWT) are short-lived (1h) — obtained via challenge-response to prevent replay attacks
+## Stack
 
-### Why `SignedPayload` wrapper?
+| Layer      | Tech                                                           |
+| ---------- | -------------------------------------------------------------- |
+| Server     | Go, ConnectRPC, Protobuf                                       |
+| Storage    | ScyllaDB (agents), Redis (cache/nonces), pgvector (embeddings) |
+| Embedder   | Python FastAPI + sentence-transformers (all-MiniLM-L6-v2)      |
+| Auth       | Ed25519 challenge-response + JWT                               |
+| Gatekeeper | Groq (llama-3.1-8b-instant)                                    |
 
-Instead of signing at the transport layer (mTLS), we sign at the payload level.
-This means the signature is stored alongside the agent record — you can verify
-who published an agent even after the fact, from the DB record alone.
+## Quick start
 
-### Why two services?
-
-`RegistryService` — write path, requires auth session token in gRPC metadata.
-`DiscoveryService` — read path, intentionally unauthenticated for basic discovery.
-Agents should be able to find each other without needing credentials.
-`SemanticSearch` and `Watch` are the power features — no auth needed to consume.
-
-### The `Watch` RPC
-
-Long-lived server-streaming RPC. An agent connects once and receives a stream
-of `WatchEvent` messages as other agents are published/updated/deprecated.
-This is the key advantage of gRPC over REST polling — zero overhead discovery.
-
-### `embedding` field on `Skill`
-
-Populated server-side, never by the publisher.
-When an agent is published, the server embeds each skill description using
-a small embedding model and stores it in pgvector.
-`SemanticSearch` then does ANN (approximate nearest neighbor) lookup.
-
-## Generating code
+**1. Install the CLI:**
 
 ```bash
-# Install buf
-brew install bufbuild/buf/buf
-
-# Generate Go + TypeScript from proto
-buf generate
-
-# Lint proto files
-buf lint
-
-# Check for breaking changes against last commit
-buf breaking --against '.git#branch=main'
+go install github.com/Sockridge/sockridge/cli@latest
 ```
 
-## Auth flow (CLI)
+**2. Register:**
 
-```
+```bash
 sockridge auth keygen
-  → generates ~/.sockridge/keys/ed25519.key (private, chmod 600)
-  → generates ~/.sockridge/keys/ed25519.pub (public)
-
-sockridge auth register --handle utsav
-  → calls RegisterPublisher(handle, public_key)
-  → saves publisher_id to ~/.sockridge/credentials
-
-sockridge publish ./my-agent.proto
-  → calls AuthChallenge(publisher_id) → gets nonce
-  → signs nonce with private key
-  → calls AuthVerify(publisher_id, nonce, sig) → gets session_token
-  → wraps AgentCard bytes in SignedPayload
-  → calls PublishAgent(signed_payload) with session_token in gRPC metadata
+sockridge auth register --handle yourhandle --server http://sockridge.com:9000
+sockridge auth login --server http://sockridge.com:9000
 ```
+
+**3. Publish your agent:**
+
+```bash
+sockridge publish --file agent.json
+```
+
+Example `agent.json`:
+
+```json
+{
+  "name": "My Agent",
+  "description": "Does something useful for other agents",
+  "version": "0.1.0",
+  "protocolVersion": "0.3.0",
+  "url": "https://my-agent.example.com",
+  "skills": [
+    {
+      "id": "do.thing",
+      "name": "Do Thing",
+      "description": "Does the thing in detail",
+      "tags": ["thing", "useful"]
+    }
+  ],
+  "capabilities": {
+    "streaming": true
+  }
+}
+```
+
+**4. Search:**
+
+```bash
+sockridge search list
+sockridge search semantic "find a lab analyzer"
+sockridge search get <agent-id>
+```
+
+**5. Request access to another agent:**
+
+```bash
+sockridge access request --to <publisher-id> --message "building a pipeline together"
+# other side approves:
+sockridge access approve --id <agreement-id>
+# shared key printed — use it to resolve endpoints
+sockridge access resolve --agent <agent-id> --key sk_...
+```
+
+## SDKs
+
+| Language   | Install                                                                              |
+| ---------- | ------------------------------------------------------------------------------------ |
+| Python     | `pip install git+https://github.com/Sockridge/sockridge.git#subdirectory=sdk/python` |
+| TypeScript | `npm install github:Sockridge/sockridge`                                             |
+| Go         | `go get github.com/Sockridge/sockridge/sdk/go`                                       |
+
+See `sdk/python/README.md` for Python SDK docs.
+
+## Self-hosting
+
+```bash
+git clone https://github.com/Sockridge/sockridge.git
+cd sockridge
+export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
+docker compose up -d --build
+```
+
+See `RUNBOOK.md` for production deployment.
+
+## How agents get approved
+
+Every published agent goes through the gatekeeper pipeline automatically:
+
+```
+publish → PENDING
+  → validate fields (name, description, skills required)
+  → ping URL (is the agent actually running?)
+  → Groq scores the card (0.0 - 1.0)
+  → score >= 0.4 → ACTIVE
+  → score < 0.4 → REJECTED
+```
+
+Rejected agents can fix their card and republish.
+
+## License
+
+MIT

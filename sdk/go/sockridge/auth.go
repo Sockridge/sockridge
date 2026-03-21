@@ -1,4 +1,4 @@
-package socialagents
+package sockridge
 
 import (
 	"context"

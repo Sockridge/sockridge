@@ -74,7 +74,7 @@ class Credentials:
         return cls(
             publisher_id  = data["publisher_id"],
             handle        = data["handle"],
-            server_url    = data.get("server_url", "http://localhost:9000"),
+            server_url    = data.get("server_url", "http://sockridge.com:9000"),
             session_token = data.get("session_token", ""),
         )
 

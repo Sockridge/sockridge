@@ -1,7 +1,7 @@
 import { Registry } from "./src/registry";
 
 async function main() {
-  const registry = new Registry("http://localhost:9000");
+  const registry = new Registry("http://sockridge.com:9000");
 
   await registry.login();
   console.log("logged in");

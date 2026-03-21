@@ -15,7 +15,7 @@ sdk/python/*.egg-info/
 sdk/python/dist/
 sdk/python/build/
 sdk/python/.venv/
-sdk/python/socialagents/__pycache__/
+sdk/python/sockridge/__pycache__/
 **/__pycache__/
 **/*.pyc
 **/*.pyo

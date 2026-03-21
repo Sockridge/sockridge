@@ -1,4 +1,4 @@
-package socialagents
+package sockridge
 
 // AgentCard is the core model representing an agent in the registry.
 type AgentCard struct {

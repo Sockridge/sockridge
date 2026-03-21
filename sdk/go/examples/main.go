@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Sockridge/sockridge/sdk/go/socialagents"
+	sockridge "github.com/Sockridge/sockridge/sdk/go/sockridge"
 )
 
 func main() {
-    r := socialagents.New("http://localhost:9000")
+    r := sockridge.New("http://sockridge:9000")
     if err := r.Login("", ""); err != nil {
         log.Fatal(err)
     }

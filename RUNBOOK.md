@@ -1,146 +1,273 @@
-# Bootstrap runbook
+# Runbook
 
-# Run these from the agentregistry/ root unless noted otherwise.
+Operations guide for running Sockridge in production.
 
-# ── 1. Install tools ──────────────────────────────────────────────────────────
+---
 
-brew install bufbuild/buf/buf
-brew install go # need 1.23+
-brew install docker # or Docker Desktop
+## Infrastructure
 
-# ── 2. Install buf plugins for Go + TypeScript codegen ───────────────────────
+| Service           | Port    | Notes             |
+| ----------------- | ------- | ----------------- |
+| Registry server   | 9000    | gRPC + ConnectRPC |
+| ScyllaDB          | 9042    | internal only     |
+| Redis             | 6379    | internal only     |
+| Postgres/pgvector | 5432    | internal only     |
+| Embedder sidecar  | 8000    | internal only     |
+| Nginx             | 80, 443 | website only      |
 
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+Only port 9000 and 80/443 are publicly exposed.
 
-# make sure $GOPATH/bin is in your PATH
+---
 
-export PATH="$PATH:$(go env GOPATH)/bin"
+## Deploy
 
-# ── 3. Generate Go code from proto ───────────────────────────────────────────
+### First time
 
-buf dep update # resolves googleapis dependency in buf.yaml
-buf generate # writes gen/go/v1/_.go and gen/ts/v1/_.ts
+```bash
+# clone
+git clone https://github.com/Sockridge/sockridge.git
+cd sockridge
 
-# you should now see:
+# set env vars
+export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
 
-# gen/go/v1/agent.pb.go
+# generate proto (requires buf + Go)
+buf generate
 
-# gen/go/v1/registry.pb.go
+# start everything
+docker compose up -d --build
 
-# gen/go/v1/registryv1connect/registry.connect.go
+# verify
+docker compose ps
+curl http://localhost:9000/healthz
+```
 
-# ── 4. Tidy Go modules ───────────────────────────────────────────────────────
+### Update (redeploy)
 
-# from agentregistry/ root:
+```bash
+cd /var/www/sockridge
+git pull
+docker compose up -d --build
+```
 
-cd server && go mod tidy && cd ..
-cd cli && go mod tidy && cd ..
+Only changed images are rebuilt. ScyllaDB and Postgres data are preserved in Docker volumes.
 
-# OR equivalently from root:
+### Rollback
 
-# go work sync
+```bash
+git log --oneline -10       # find previous commit
+git checkout <commit-hash>
+docker compose up -d --build
+```
 
-# ── 5. Verify it compiles ─────────────────────────────────────────────────────
+---
 
-cd server && go build ./... && cd ..
-cd cli && go build ./... && cd ..
+## Environment variables
 
-# ── 6. Run auth tests ─────────────────────────────────────────────────────────
+| Variable                            | Required | Description                                                                 |
+| ----------------------------------- | -------- | --------------------------------------------------------------------------- |
+| `AGENTREGISTRY_GATEKEEPER_GROQ_KEY` | No       | Groq API key for AI scoring. Without it, agents auto-approve with score 0.5 |
+| `AGENTREGISTRY_SCYLLA_HOSTS`        | No       | Defaults to `scylla:9042`                                                   |
+| `AGENTREGISTRY_SCYLLA_KEYSPACE`     | No       | Defaults to `agentregistry`                                                 |
+| `AGENTREGISTRY_REDIS_ADDR`          | No       | Defaults to `redis:6379`                                                    |
+| `AGENTREGISTRY_POSTGRES_DSN`        | No       | Defaults to docker compose postgres                                         |
+| `AGENTREGISTRY_EMBEDDER_URL`        | No       | Defaults to `http://embedder:8000`                                          |
+| `AGENTREGISTRY_AUTH_JWT_SECRET`     | No       | Defaults to `dev-secret` — **change in production**                         |
 
-cd server && go test ./internal/auth/... -v && cd ..
+Set a strong JWT secret in production:
 
-# expected output:
+```bash
+export AGENTREGISTRY_AUTH_JWT_SECRET=$(openssl rand -hex 32)
+```
 
-# --- PASS: TestChallengeVerify_HappyPath
+---
 
-# --- PASS: TestVerify_WrongSignature
+## Monitoring
 
-# --- PASS: TestVerify_NonceIsOneTimeUse
+### Check all containers
 
-# ── 7. Spin up the full stack ─────────────────────────────────────────────────
+```bash
+docker compose ps
+docker stats --no-stream
+```
 
-docker compose up --build
+### Check logs
 
-# waits for:
+```bash
+# all services
+docker compose logs -f
 
-# scylla → healthy (takes ~30s on first boot)
+# specific service
+docker compose logs -f server
+docker compose logs -f embedder
+docker compose logs -f scylla
+```
 
-# redis → healthy
+### Check gatekeeper is running
 
-# postgres → healthy
+```bash
+docker compose logs server | grep gatekeeper
+# should show: "gatekeeper configured with AI scoring"
+```
 
-# server → starts on :9000
+### Check pgvector embeddings
 
-# ── 8. Smoke test end-to-end ─────────────────────────────────────────────────
+```bash
+docker compose exec postgres psql -U agentregistry -c \
+  "SELECT COUNT(*) FROM skill_embeddings;"
+```
 
-# build the CLI first
+### Check ScyllaDB agents
 
-cd cli && go build -o ../bin/sockridge . && cd ..
-export PATH="$PATH:$(pwd)/bin"
+```bash
+docker compose exec scylla cqlsh -e \
+  "SELECT agent_id, publisher_id FROM agentregistry.agents;"
+```
 
-# generate keypair
+---
 
-sockridge auth keygen
+## Backup
 
-# register publisher
+### ScyllaDB
 
-sockridge auth register --handle utsav
+```bash
+# snapshot
+docker compose exec scylla nodetool snapshot agentregistry
 
-# login (challenge → sign → JWT)
+# copy snapshot out
+docker cp sockridge-scylla-1:/var/lib/scylla/data/agentregistry \
+  ./backups/scylla-$(date +%Y%m%d)
+```
 
+### Postgres (embeddings)
+
+```bash
+docker compose exec postgres pg_dump -U agentregistry agentregistry \
+  > ./backups/postgres-$(date +%Y%m%d).sql
+```
+
+### Redis
+
+Redis is cache only — no backup needed. Data rebuilds on next request.
+
+---
+
+## Disk usage
+
+```bash
+df -h
+docker system df
+du -sh /var/lib/docker
+```
+
+### Clean up unused Docker resources
+
+```bash
+# safe — removes stopped containers, dangling images, unused networks
+docker system prune -f
+
+# aggressive — removes all unused images (will re-download on next deploy)
+docker system prune -a -f
+```
+
+---
+
+## Common issues
+
+### Embedder fails healthcheck
+
+```bash
+docker compose logs embedder
+# if "curl not found":
+# add RUN apt-get install -y curl to embedder/Dockerfile
+```
+
+### ScyllaDB stuck in starting
+
+ScyllaDB takes 30-60s to start. Wait and check:
+
+```bash
+docker compose logs scylla | tail -20
+```
+
+### Server can't connect to ScyllaDB
+
+```bash
+# check ScyllaDB is healthy
+docker compose ps scylla
+
+# check keyspace was created
+docker compose exec scylla cqlsh -e "DESCRIBE KEYSPACES;"
+```
+
+### Semantic search returns no results
+
+```bash
+# check if ivfflat index exists — drop it if you have < 1000 agents
+docker compose exec postgres psql -U agentregistry -c \
+  "DROP INDEX IF EXISTS skill_embeddings_embedding_idx;"
+
+# check embeddings exist
+docker compose exec postgres psql -U agentregistry -c \
+  "SELECT COUNT(*) FROM skill_embeddings;"
+```
+
+### JWT expired / auth failing
+
+Sessions expire after 1 hour. Re-login:
+
+```bash
 sockridge auth login
+```
 
-# create a test agent file
+---
 
-cat > /tmp/test-agent.json << 'JSON'
-{
-"name": "Test FHIR Agent",
-"description": "Analyzes lab trends from FHIR",
-"version": "0.1.0",
-"protocol_version": "0.3.0",
-"skills": [
-{
-"id": "lab.analyze",
-"name": "Lab Analyzer",
-"description": "Detects anomalies in lab result trends",
-"tags": ["fhir", "labs", "analysis"]
-}
-],
-"capabilities": {
-"streaming": true,
-"tool_use": true
-}
-}
-JSON
+## Firewall
 
-# publish it
+```bash
+# check current rules
+sudo ufw status
 
-sockridge publish --file /tmp/test-agent.json
+# required open ports
+sudo ufw allow 22    # SSH
+sudo ufw allow 80    # website
+sudo ufw allow 443   # website HTTPS
+sudo ufw allow 9000  # registry API
 
-# list agents
+sudo ufw enable
+```
 
-sockridge search list
+---
 
-# watch for new agents in another terminal
+## Nginx (website only)
 
-sockridge search watch --tag fhir
+```bash
+# test config
+sudo nginx -t
 
-# ── 9. Known issues to watch for ─────────────────────────────────────────────
+# reload
+sudo systemctl reload nginx
 
-# Issue: ScyllaDB takes ~30s to be ready on first boot
+# check logs
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+```
 
-# Fix: docker compose up already has healthcheck retries — just wait
+### SSL renewal
 
-# Issue: buf generate fails with "plugin not found"
+Certbot auto-renews. Test renewal:
 
-# Fix: make sure $GOPATH/bin is in PATH, re-run: go install ... for each plugin
+```bash
+sudo certbot renew --dry-run
+```
 
-# Issue: go mod tidy fails on "cannot find module"
+---
 
-# Fix: run buf generate first — gen/go/v1 must exist before tidy
+## Scale notes
 
-# Issue: "transport: http2: frame too large" on gRPC calls
+Current setup handles ~100 concurrent agents comfortably on a 4GB VPS. When you need more:
 
-# Fix: make sure you're hitting port 9000, not 8080
+- ScyllaDB: increase `--memory` flag and `--smp` (CPU cores) in docker-compose.yml
+- Embedder: add GPU support by switching to `pytorch/pytorch` base image
+- Postgres: add ivfflat index once you have >1000 agents in `skill_embeddings`
+- Server: stateless — run multiple replicas behind a load balancer

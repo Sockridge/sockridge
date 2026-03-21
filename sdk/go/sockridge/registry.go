@@ -1,22 +1,22 @@
-// Package socialagents provides a Go SDK for the SocialAgents agent registry.
+// Package sockridge provides a Go SDK for the SockRidge agent registry.
 //
 // Usage:
 //
-//	registry := socialagents.New("http://localhost:9000")
+//	registry := sockridge.New("http://localhost:9000")
 //	if err := registry.Login("", ""); err != nil {
 //	    log.Fatal(err)
 //	}
 //
-//	published, err := registry.Publish(ctx, &socialagents.AgentCard{
+//	published, err := registry.Publish(ctx, &sockridge.AgentCard{
 //	    Name:        "My Agent",
 //	    Description: "Does something useful",
 //	    URL:         "https://my-agent.example.com",
-//	    Skills: []socialagents.Skill{{
+//	    Skills: []sockridge.Skill{{
 //	        ID: "do.thing", Name: "Do Thing",
 //	        Description: "Does the thing", Tags: []string{"thing"},
 //	    }},
 //	})
-package socialagents
+package sockridge
 
 import (
 	"context"
