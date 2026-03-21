@@ -126,6 +126,8 @@ See `sdk/python/README.md` for Python SDK docs.
 ```bash
 git clone https://github.com/Sockridge/sockridge.git
 cd SocialAgents
+export AGENTREGISTRY_GATEKEEPER_ANTHROPIC_KEY=gsk_...
+or
 export AGENTREGISTRY_GATEKEEPER_GROQ_KEY=gsk_...
 docker compose up -d --build
 ```
