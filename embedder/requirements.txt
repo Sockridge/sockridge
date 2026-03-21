@@ -1,0 +1,5 @@
+fastapi==0.115.5
+uvicorn==0.32.1
+sentence-transformers==3.3.1
+numpy==1.26.4
+# torch installed separately with CPU-only flag in Dockerfile

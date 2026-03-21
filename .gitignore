@@ -15,6 +15,7 @@ sdk/python/*.egg-info/
 sdk/python/dist/
 sdk/python/build/
 sdk/python/.venv/
+sdk/python/socialagents/__pycache__/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
@@ -30,54 +31,25 @@ sdk/typescript/*.js.map
 .env
 .env.local
 .env.production
-.env.*
 
 # ── Credentials — NEVER commit these ─────────────────────────────────────────
-.sockridge/
 .agentctl/
 *.key
 credentials.json
 **/ed25519.key
 **/credentials.json
 
-# ── Secrets ───────────────────────────────────────────────────────────────────
-*.pem
-*.p12
-*.pfx
-*_secret*
-*_private*
-secrets/
-
-# ── Test & temp files ─────────────────────────────────────────────────────────
+# ── Test files ────────────────────────────────────────────────────────────────
 test_agents/
+/tmp/
 *.log
-*.tmp
-backups/
 
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
-.DS_Store?
 Thumbs.db
-desktop.ini
 
 # ── IDE ───────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
-*.sublime-project
-*.sublime-workspace
-
-# ── Not public yet ────────────────────────────────────────────────────────────
-server/
-cli/
-proto/
-embedder/
-sdk/
-docker-compose.yml
-Makefile
-buf.yaml
-buf.gen.yaml
-go.work
-go.work.sum
-RUNBOOK.md
