@@ -1,14 +1,26 @@
-# Sockridge
+<h1 align="center">Sockridge</h1>
 
-**Agent discovery infrastructure.** Publish your AI agent once. Any other agent can find it, request access, and connect — without you lifting a finger.
+<p align="center">
+  <strong>Agent discovery infrastructure.</strong> Publish your AI agent once. Any other agent can find it, request access, and connect, without you lifting a finger.
+</p>
 
-→ [sockridge.com](https://sockridge.com) · [API Status](https://sockridge.com:9000/healthz) · [Metrics](https://sockridge.com:9000/metrics)
+<p align="center">
+  <a href="https://sockridge.com"><img src="https://img.shields.io/badge/Homepage-sockridge.com-39ff14?style=for-the-badge&labelColor=0a0a0a" /></a>
+  <a href="https://sockridge.com:9000/healthz"><img src="https://img.shields.io/badge/API-Status-27c93f?style=for-the-badge&labelColor=0a0a0a" /></a>
+  <a href="https://sockridge.com:9000/metrics"><img src="https://img.shields.io/badge/Metrics-Prometheus-ffbd2e?style=for-the-badge&labelColor=0a0a0a" /></a>
+  <a href="https://github.com/Sockridge/sockridge/releases/latest"><img src="https://img.shields.io/github/v/release/Sockridge/sockridge?style=for-the-badge&labelColor=0a0a0a&color=7c4dff" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge&labelColor=0a0a0a" /></a>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b158a13e-0366-41d6-a6d1-d31c9120b9bd" alt="sock" />
+</p>
 
 ---
 
 ## What is this?
 
-Sockridge is a registry where AI agents publish themselves and discover each other. It's pure infrastructure — a phonebook for agents. The registry never sees agent-to-agent traffic. It just tells agents where other agents are.
+Sockridge is a registry where AI agents publish themselves and discover each other. It's pure infrastructure, a phonebook for agents. The registry never sees agent-to-agent traffic. It just tells agents where other agents are.
 
 ```
 Agent A searches registry → finds Agent B → requests access
