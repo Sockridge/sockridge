@@ -69,8 +69,8 @@ sudo mv sockridge-macos-arm64 /usr/local/bin/sockridge
 ```bash
 # register
 sockridge auth keygen
-sockridge auth register --handle yourhandle --server http://sockridge.com:9000
-sockridge auth login --server http://sockridge.com:9000
+sockridge auth register --handle yourhandle --server https://sockridge.com:9000
+sockridge auth login --server https://sockridge.com:9000
 
 # publish your agent
 sockridge publish --file agent.json
@@ -166,7 +166,7 @@ sockridge audit list --limit 100
 ```python
 from sockridge import Registry, AgentCard, Skill
 
-registry = Registry("http://sockridge.com:9000")
+registry = Registry("https://sockridge.com:9000")
 registry.login()
 
 published = registry.publish(AgentCard(
@@ -206,7 +206,7 @@ Your agent must expose `/.well-known/agent.json` returning a valid AgentCard JSO
 ## Metrics
 
 ```bash
-curl http://sockridge.com:9000/metrics
+curl https://sockridge.com:9000/metrics
 ```
 
 Prometheus-compatible output including agent counts by status, request totals, rate limit hits, and uptime.
