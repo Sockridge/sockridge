@@ -12,9 +12,9 @@ func main() {
 	var configDir string
 
 	root := &cobra.Command{
-		Use:   "agentctl",
+		Use:   "sockridge",
 		Short: "CLI for the agent registry",
-		Long:  "agentctl — publish, discover, and manage agents in the registry.",
+		Long:  "sockridge — publish, discover, and manage agents in the registry.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if configDir != "" {
 				keystore.SetConfigDir(configDir)
@@ -22,7 +22,7 @@ func main() {
 		},
 	}
 
-	root.PersistentFlags().StringVar(&configDir, "config", "", "Config directory (default ~/.agentctl)")
+	root.PersistentFlags().StringVar(&configDir, "config", "", "Config directory (default ~/.sockridge)")
 
 	root.AddCommand(
 		cmd.NewAuthCmd(),
